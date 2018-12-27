@@ -2,9 +2,9 @@ pipeline:
 
   build:
     image: ukhomeoffice/drone-docker
-    repo: docker.digital.homeoffice.gov.uk/dq-oag-sftp-docker
+    repo: quay.io/ukhomeofficedigital/dq-oag-sftp-docker
     secrets: [ docker_username, docker_password ]
-    registry: docker.digital.homeoffice.gov.uk
+    registry: quay.io
     context: app
     dockerfile: app/Dockerfile
     force_tag: true
