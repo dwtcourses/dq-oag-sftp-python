@@ -8,6 +8,7 @@ COPY packages.txt ./
 COPY test.py ./
 
 RUN apt-get install git wget
+RUN apt-get update -y && apt-get upgrade -y
 RUN wget http://ftp.gnu.org/gnu/gdbm/gdbm-1.8.3.tar.gz && \
    tar -xvzf gdbm-1.8.3.tar.gz && \
    cd gdbm-1.8.3 && \
