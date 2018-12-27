@@ -9,7 +9,6 @@ pipeline:
     dockerfile: app/Dockerfile
     force_tag: true
     tags:
-      - ${DRONE_COMMIT_SHA}
       - ${DRONE_BRANCH}-${DRONE_BUILD_NUMBER}
     when:
       event: push
