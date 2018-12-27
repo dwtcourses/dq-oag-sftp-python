@@ -9,22 +9,24 @@ COPY test.py ./
 
 RUN apt-get install git wget
 RUN apt-get update -y && apt-get upgrade -y
-RUN git clone git@github.com:UKHomeOffice/dq-ssm_ingest.git
 RUN wget http://ftp.gnu.org/gnu/gdbm/gdbm-1.8.3.tar.gz && \
-   tar -xvzf gdbm-1.8.3.tar.gz && \
-   cd gdbm-1.8.3 && \
-   ./configure --prefix=/usr && \
-   make && \
-   make BINOWN=root BINGRP=root install
+    tar -xvzf gdbm-1.8.3.tar.gz && \
+    cd gdbm-1.8.3 && \
+    ./configure --prefix=/usr && \
+    make && \
+    make BINOWN=root BINGRP=root install
 RUN pip install --no-cache-dir -r packages.txt
 RUN groupadd -r scriptrunner && \
-useradd --no-log-init -u $USERMAP_UID -r -g scriptrunner runner && \
-chown runner:scriptrunner /ADT/scripts/test.py && \
-chmod 700 /ADT/scripts/test.py && \
-mkdir -p /ADT/log && \
-mkdir -p /ADT/data/oag && \
-mkdir -p /ADT/stage/oag && \
-mkdir -p /ADT/quarantine/oag
+    useradd --no-log-init -u $USERMAP_UID -r -g scriptrunner runner
+
+RUN git clone https://github.com/UKHomeOffice/dq-ssm_ingest.git
+
+RUN mkdir -p /ADT/log && \
+    mkdir -p /ADT/data/oag && \
+    mkdir -p /ADT/stage/oag && \
+    mkdir -p /ADT/quarantine/oag && \
+    chown -R runner:scriptrunner /ADT/ && \
+    chmod -R 700 /ADT/scripts/
 
 USER ${USERMAP_UID}
 
