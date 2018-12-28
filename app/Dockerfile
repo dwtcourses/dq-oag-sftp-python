@@ -15,9 +15,10 @@ RUN mkdir -p \
              /home/runner/.ssh
 
 COPY packages.txt /tmp/ADT/scripts
-COPY test.py /tmp/ADT/scripts
-COPY ecosystem.config.js /tmp/s4/scripts
+COPY ecosystem.config.js /tmp/ADT/scripts
 COPY docker-entrypoint.sh /
+ADD bin /tmp/ADT/bin
+ADD scripts /tmp/ADT/scripts
 
 # Add user
 RUN groupadd -r runner && \
@@ -57,7 +58,7 @@ chmod +x /docker-entrypoint.sh
 
 USER ${USERMAP_UID}
 
-WORKDIR /ADT/scripts
+WORKDIR /ADT
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
