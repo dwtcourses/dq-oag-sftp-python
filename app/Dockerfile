@@ -9,6 +9,7 @@ RUN mkdir -p \
              /tmp/ADT/data/oag \
              /tmp/ADT/stage/oag \
              /tmp/ADT/quarantine/oag \
+             /tmp/ADT/log \
              /tmp/ADT/bin \
              /ADT \
              /home/runner/.pm2 \
@@ -48,7 +49,7 @@ RUN apt-get update \
     && npm install -g pm2
 
 # Get script files
-RUN git clone https://github.com/UKHomeOffice/dq-ssm_ingest.git
+RUN git clone --branch dockerise-oag https://github.com/UKHomeOffice/dq-ssm_ingest.git
 
 VOLUME ["/ADT"]
 RUN chown -R runner:runner /ADT
@@ -63,7 +64,7 @@ WORKDIR /ADT
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 # Start PM2
-CMD pm2-docker /ADT/scripts/ecosystem.config.js  -- --config $SSH_REMOTE_HOST_MAYTECH $SSH_REMOTE_USER_MAYTECH $SSH_PRIVATE_KEY $SSH_LANDING_DIR $S3_BUCKET_NAME $S3_ACCESS_KEY_ID $S3_SECRET_ACCESS_KEY $CLAMAV_URL $CLAMAV_PORT
+CMD pm2-docker /ADT/scripts/ecosystem.config.js  -- --config $SSH_REMOTE_HOST_MAYTECH $SSH_REMOTE_USER_MAYTECH $SSH_PRIVATE_KEY $SSH_LANDING_DIR $S3_BUCKET_NAME $S3_KEY_PREFIX $S3_ACCESS_KEY_ID $S3_SECRET_ACCESS_KEY $CLAMAV_URL $CLAMAV_PORT
 
 # Save PM2 configuration
 RUN pm2 save

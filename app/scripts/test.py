@@ -15,16 +15,28 @@ import paramiko
 import boto3
 import requests
 
-
 def main():
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    parser = argparse.ArgumentParser(description='OAG SFTP Downloader')
+    parser.add_argument('-D','--DEBUG',  default=False, action='store_true', help='Debug mode logging')
+    args = parser.parse_args()
+    if args.DEBUG:
+        logging.basicConfig(
+            filename='/ADT/log/sftp_oag_maytech.log',
+            format="%(asctime)s\t%(name)s\t%(levelname)s\t%(message)s",
+            datefmt='%Y-%m-%d %H:%M:%S',
+            level=logging.DEBUG
+        )
+    else:
+        logging.basicConfig(
+            filename='/ADT/log/sftp_oag_maytech.log',
+            format="%(asctime)s\t%(name)s\t%(levelname)s\t%(message)s",
+            datefmt='%Y-%m-%d %H:%M:%S',
+            level=logging.INFO
+        )
 
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    logger = logging.getLogger()
+    logger.info("Starting")
+    status = 1
 
     while True:
         logger.info('All modules imported and I am up and running!')

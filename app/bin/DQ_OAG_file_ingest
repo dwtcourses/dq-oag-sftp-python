@@ -10,11 +10,11 @@ import time
 import schedule
 
 from scripts import settings
-from scripts import test
+from scripts import DQ_OAG_file_ingest
 
 def start():
     """Main function that runs every (x) seconds based on the schedule."""
-    test.main()
+    DQ_OAG_file_ingest.main()
 
 
 if __name__ == "__main__":
