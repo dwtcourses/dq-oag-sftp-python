@@ -81,9 +81,9 @@ spec:
                 name: dq-oag-data-ingest
                 key: S3_SECRET_ACCESS_KEY
           - name: CLAMAV_URL
-            value: 127.0.0.1
+            value: "127.0.0.1"
           - name: CLAMAV_PORT
-            value: 3200
+            value: "3200"
         volumeMounts:
         - name: sftp-key
           mountPath: /key
