@@ -23,8 +23,6 @@ spec:
       - name: oag-volume
         persistentVolumeClaim:
           claimName: oag-volume
-      - name: avdata
-        emptyDir: {}
       containers:
       - name: dq-oag-data-ingest
         image: quay.io/ukhomeofficedigital/dq-oag-sftp-docker:{{.DRONE_COMMIT_SHA}}
@@ -104,9 +102,6 @@ spec:
         - containerPort: 3200
           name: api
           protocol: TCP
-        volumeMounts:
-          - mountPath: /var/lib/clamav
-            name: avdata
         livenessProbe:
           exec:
             command:
@@ -123,9 +118,6 @@ spec:
         env:
         - name: UPDATE_ONLY
           value: "true"
-        volumeMounts:
-        - mountPath: /var/lib/clamav
-          name: avdata
         livenessProbe:
           exec:
             command:
