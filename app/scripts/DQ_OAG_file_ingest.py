@@ -3,7 +3,10 @@
 # SFTP OAG Script
 # Version 3 - maytech copy
 
-# we only need the datetime class & the static function strptime from datetime module
+# Move files from SFTP to local drive
+# Scan them using ClamAV
+# Upoad to S3
+# Remove from local drive
 """
 import re
 import os
