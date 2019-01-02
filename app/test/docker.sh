@@ -1,22 +1,22 @@
 #!/bin/bash
 
 # This script does the following:
-# - downloads and runs 3 (three) Docker containers all from public repos
-# The code expects two runtime arguments:
-# arg[0]: full file path to the public key that will be used to login
-# from the OAG docker container
-# arg[1]: full file path to the docker mount used as the root of the SFTP server
+# - downloads and runs 3 (three) Docker containers all from public repositories
+# - builds a new container from the local repository
+# - requests running user to supply values used as variables
 
 set -e
 
-# Set variables:
+# Set variables
 
+# Used by sftp_server function
 echo "Setup sftp-server container variables:"
 echo "Enter pubkey location (full file path) and press [ENTER]: "
 read pubkey
 echo "Enter mountpoint location (full file path) and press [ENTER]: "
 read mountpoint
 
+# Used by oag function
 echo "Setup OAG container variables"
 echo "Enter username and press [ENTER]: "
 read username
