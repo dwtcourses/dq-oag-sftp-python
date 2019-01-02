@@ -1,69 +1,79 @@
-# dq-oag-sftp-docker
+# dq-oag-sftp-python
 
-Docker container that runs a single Python2.7 script.
+A collection of Docker containers running a data pipeline.
 
-## Components
+## Dependencies
 
-- app/
-  - Dockerfile: describe what is installed in the container and the Python file that needs to run
-  - packages.txt: Python custom Modules
-  - test.py: mock script that is running in the container
+- Docker
+- Python2.7
+- Drone
+- AWS CLI
+- AWS Keys with PUT/GET access to S3
+- Kubernetes
 
-- .drone.yml: CI deployment configuration
+## Structure
+
+- **app/**
+  - *Dockerfile*: describe what is installed in the container and the Python file that needs to run
+  - *docker-entrypoint.sh*: bash scripts running at container startup
+  - *packages.txt*: Python custom Modules
+  - *test.py*: mock script that is running in the container
+  - *ecosystem.config.js*: declare variables used by PM2 at runtime
+  - **bin/**
+    - *DQ_OAG_file_ingest*: Python script used with PM2 to declare imported files to PM2 at runtime
+  - **scripts/**
+    - *__init__.py*: declare Python module import
+    - *DQ_OAG_file_ingest.py*: Python2.7 script running within the container
+    - *settings.py*: declare variables passed to the *DQ_OAG_file_ingest.py* file at runtime
+  - **test/**
+    - *test.py*: Test Python2.7 script
+    - *docker.sh*: Download and run docker containers
+    - *eicar.com*: File containing a test virus string
+- *.drone.yml*: CI deployment configuration
+- *LICENSE*: MIT license file
+- *README.md*: readme file
 
 ## Local Test suite
 
+Testing the OAG Python script can be done by having access to AWS S3 and docker.
+The full stack comprise of 4 (four) Docker containers within the same network linked to each other so DNS name resolution works between the components.
+
+The containers can be started and a couple of test files generated using the *docker.sh* script located in **app/test**.
+The script will require the following variables passed in at runtime.
+
+|Name|Value|Required|Description|
+| --- |:---:| :---:| ---:|
+| pubkey | /local/path/id_rsa.pub | True | Public SSH key used by the SFTP server|
+| privkey | /local/path/id_rsa | True | Private SSH used to connect to the SFTP server|
+| mountpoint|  /local/path/mountpoint-dir | True | SFTP source directory|
+| username | sftp_user | True| Mock SFTP local user|
+| sourcedir | mountpoint-dir | True | Name of the SFTP source directory
+| bucketname | s3-bucket-name | True | S3 bucket name |
+| keyprefix | prefix | True | S3 folder name |
+| awskeyid | ABCD | True | AWS access key ID |
+| awssecret| abcdb1234 | True | AWS Secret access key |
+
 - Components:
   - SFTP container
-
-  ```
-  docker run --rm \
-  --name sftp-server \
-  -v /local/path/id_rsa.pub:/home/sftp_user/.ssh/authorized_keys:ro \
-  -v /local/path/homeshare:/home/sftp_user/sftp \
-  -p 2222:22 -d atmoz/sftp \
-  sftp_user::1000
-  ```
   - ClamAV container
-
-  ```
-  docker run --name clamav -d -p 3310:3310 quay.io/ukhomeofficedigital/clamav
-  ```
   - ClamAV REST API container
+  - OAG Python container
 
-  ```
-  docker run --rm \
-  --name clamav-api \
-  -e 'CLAMD_HOST=clamav' \
-  -p 8080:8080 \
-  --link clamav:clamav \
-  -t -i -d lokori/clamav-rest
-  ```
-  - OAG SFTP container
+After the script has completed - for the first time it will take around 5 minutes to download all images - there should be a couple of test files in the S3 bucket:
 
-  Build it first using the Dockerfile in the repo:
+```
+1124_YYYY_MM_DD_HH_MM_SS.xml
+1124_YYYY_MM_DD_HH_MM_SS.xml.done
+```
+The other test file contains a test virus string and it will be located under if the ClamAV scan worked as expected:
 
-  ```
-  docker build -t python/oag --rm .
-  ```
-  Run the container adding in all required variables:
+```
+/ADT/quarantine/oag/1124_YYYY_MM_DD_HH_MM_SS.xml
+```
 
-  ```
-  docker run --rm \
-  --name oag \
-  -e SSH_REMOTE_HOST_MAYTECH='sftp-server' \
-  -e SSH_REMOTE_USER_MAYTECH='sftp_user' \
-  -e SSH_PRIVATE_KEY='/home/runner/.ssh/id_rsa' \
-  -e SSH_LANDING_DIR='sftp' \
-  -e S3_BUCKET_NAME='bucket-name' \
-  -e S3_KEY_PREFIX='bucket-prefix' \
-  -e S3_ACCESS_KEY_ID='foo' \
-  -e S3_SECRET_ACCESS_KEY='bar' \
-  -e CLAMAV_URL='clamav-api' \
-  -e CLAMAV_PORT='8080' \
-  -v /local/path/id_rsa:/home/runner/.ssh/id_rsa:ro \
-  --link clamav-api:clamav-api --link sftp-server:sftp-server \
-  -d python/oag
-  ```
+- Launching the test suite
+NOTE: navigate to **app/test** first.
 
-  After all containers are up add a file matching the *regex* to `/local/path/homeshare` and verify it being uploaded to S3.
+```
+sh docker.sh
+```

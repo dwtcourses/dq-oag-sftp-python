@@ -7,7 +7,6 @@ cp -R /tmp/ADT/scripts /ADT
 cp -R /tmp/ADT/quarantine /ADT
 cp -R /tmp/ADT/log /ADT
 cp -R /tmp/ADT/bin /ADT
-cp /dq-ssm_ingest/ADT/sftp_oag_client_maytech.py /ADT/scripts
 
 # Set permissions
 chown -R runner:runner /ADT/data

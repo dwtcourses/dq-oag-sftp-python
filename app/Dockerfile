@@ -48,9 +48,6 @@ RUN apt-get update \
     && apt-get install -y nodejs \
     && npm install -g pm2
 
-# Get script files
-RUN git clone --branch dockerise-oag https://github.com/UKHomeOffice/dq-ssm_ingest.git
-
 VOLUME ["/ADT"]
 RUN chown -R runner:runner /ADT
 
