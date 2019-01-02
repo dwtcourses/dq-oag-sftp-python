@@ -42,7 +42,8 @@ function sftp_server {
         -v $pubkey:/home/$username/.ssh/authorized_keys:ro \
         -v $mountpoint:/home/$username/$sourcedir \
         -p 2222:22 -d atmoz/sftp \
-        $username::1000)
+        $username::1000
+        )
         echo "Created container with SHA: $run"
 }
 
@@ -52,7 +53,8 @@ function clamav {
   run=$(docker run --rm \
         --name clamav \
         -d -p 3310:3310 \
-        quay.io/ukhomeofficedigital/clamav)
+        quay.io/ukhomeofficedigital/clamav
+        )
         echo "Created container with SHA: $run"
 }
 
@@ -64,7 +66,8 @@ function clamav_api {
         -e 'CLAMD_HOST=clamav' \
         -p 8080:8080 \
         --link clamav:clamav \
-        -t -i -d lokori/clamav-rest)
+        -t -i -d lokori/clamav-rest
+        )
         echo "Created container with SHA: $run"
 }
 
