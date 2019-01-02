@@ -17,7 +17,7 @@ spec:
         secret:
           secretName: dq-oag-data-ingest
           items:
-          - key: SSH_PRIVATE_KEY
+          - key: PRIVATE_KEY
             path: id_rsa
             mode: 400
       - name: oag-volume
@@ -52,7 +52,12 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: dq-oag-data-ingest
-                key: SSH_PRIVATE_KEY
+                key: SSH_PRIVATE_KEY_PATH
+          - name: PRIVATE_KEY
+            valuefrom:
+              secretKeyRef:
+                name: dq-oag-data-ingest
+                key: PRIVATE_KEY
           - name: SSH_LANDING_DIR
             valueFrom:
               secretKeyRef:
