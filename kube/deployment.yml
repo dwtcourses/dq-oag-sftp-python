@@ -52,7 +52,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: dq-oag-data-ingest
-                key: SSH_PRIVATE_KEY_PATH
+                key: SSH_PRIVATE_KEY
           - name: PRIVATE_KEY
             valuefrom:
               secretKeyRef:
