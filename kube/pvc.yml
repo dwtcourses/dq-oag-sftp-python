@@ -1,0 +1,12 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: oag-volume
+  annotations:
+    volume.beta.kubernetes.io/storage-class: gp2-encrypted
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .OAG_PVC_SIZE }}
