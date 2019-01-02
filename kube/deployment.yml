@@ -27,7 +27,7 @@ spec:
         emptyDir: {}
       containers:
       - name: dq-oag-data-ingest
-        image: quay.io/ukhomeofficedigital/dq-raw-message-retrieval:{{.DRONE_COMMIT_SHA}}
+        image: quay.io/ukhomeofficedigital/dq-oag-sftp-docker:{{.DRONE_COMMIT_SHA}}
         imagePullPolicy: Always
         securityContext:
           runAsNonRoot: true
