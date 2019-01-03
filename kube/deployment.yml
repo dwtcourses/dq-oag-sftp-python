@@ -100,6 +100,13 @@ spec:
         securityContext:
           runAsNonRoot: true
           runAsUser: 1000
+        resources:
+          limits:
+            cpu: {{.CLAMAV_CPU_LIMIT}}
+            memory: {{.CLAMAV_RAM_LIMIT}}
+          requests:
+            cpu: {{.CLAMAV_CPU_REQUEST}}
+            memory: {{.CLAMAV_RAM_REQUEST}}
         env:
         - name: UPDATE
           value: "false"
@@ -120,6 +127,13 @@ spec:
         securityContext:
           runAsNonRoot: true
           runAsUser: 1000
+        resources:
+          limits:
+            cpu: {{.CLAMAV_CPU_LIMIT}}
+            memory: {{.CLAMAV_RAM_LIMIT}}
+          requests:
+            cpu: {{.CLAMAV_CPU_REQUEST}}
+            memory: {{.CLAMAV_RAM_REQUEST}}          
         env:
         - name: UPDATE_ONLY
           value: "true"
