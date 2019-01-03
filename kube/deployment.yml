@@ -170,7 +170,7 @@ spec:
         ports:
         - containerPort: 3310
           name: api
-          [rotocol: TCP
+          protocol: TCP
         livenessProbe:
           exec:
             command:
