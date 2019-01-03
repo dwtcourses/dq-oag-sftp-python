@@ -12,6 +12,7 @@ pipeline:
       - ${DRONE_COMMIT_SHA}
       - ${DRONE_BUILD_NUMBER}
     when:
+      branch: master
       event: push
 
   deploy_to_dev:
@@ -19,7 +20,7 @@ pipeline:
     environment:
       - KUBE_NAMESPACE=dq-apps-notprod
       - INSECURE_SKIP_TLS_VERIFY=true
-      - OAG_PVC_SIZE=5Gi
+      - OAG_PVC_SIZE=1Gi
       - OAG_CPU_REQUEST=1
       - OAG_CPU_LIMIT=1.5
       - OAG_RAM_REQUEST=1Gi

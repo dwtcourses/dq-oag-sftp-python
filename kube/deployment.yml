@@ -94,8 +94,37 @@ spec:
         - name: oag-volume
           mountPath: /ADT
 
+      - name: nginx
+        image: quay.io/ukhomeofficedigital/nginx-proxy
+        imagePullPolicy: Always
+        env:
+          - name: PROXY_SERVICE_HOST
+            value: 'http://127.0.0.1'
+          - name: PROXY_SERVICE_PORT
+            value: '8080'
+          - name: NAXSI_USE_DEFAULT_RULES
+            value: 'FALSE'
+          - name: ENABLE_UUID_PARAM
+            value: 'FALSE'
+          - name: CLIENT_MAX_BODY_SIZE
+            value: '10'
+          - name: SSL_CERT
+            value: /etc/secrets/nginx.crt
+          - name: SSL_KEY
+            value: /etc/secrets/nginx.key
+        ports:
+         - name: https
+           containerPort: 443
+        resources:
+         limits:
+          cpu: 100m
+          memory: 400M
+        volumeMounts:
+          - mountPath: /etc/secrets
+            name: secrets
+
       - name: clamav-api
-        image: quay.io/ukhomeofficedigital/clamav
+        image: quay.io/ukhomeofficedigital/clamav-rest
         imagePullPolicy: Always
         securityContext:
           runAsNonRoot: true
@@ -108,18 +137,22 @@ spec:
             cpu: {{.CLAMAV_CPU_REQUEST}}
             memory: {{.CLAMAV_RAM_REQUEST}}
         env:
-        - name: UPDATE
-          value: "false"
+        - name: HOST
+          value: localhost
+        - name: PORT
+          value: '3310'
         ports:
-        - containerPort: 3200
+        - containerPort: 8080
           name: api
           protocol: TCP
         livenessProbe:
           exec:
             command:
-            - /readyness.sh
-          initialDelaySeconds: 20
-          timeoutSeconds: 2
+            - /healthcheck.sh
+          initialDelaySeconds: 60
+          timeoutSeconds: 10
+          periodSeconds: 30
+          failureThreshold: 10
 
       - name: clamav
         image: quay.io/ukhomeofficedigital/clamav
@@ -133,13 +166,16 @@ spec:
             memory: {{.CLAMAV_RAM_LIMIT}}
           requests:
             cpu: {{.CLAMAV_CPU_REQUEST}}
-            memory: {{.CLAMAV_RAM_REQUEST}}          
-        env:
-        - name: UPDATE_ONLY
-          value: "true"
+            memory: {{.CLAMAV_RAM_REQUEST}}
+        ports:
+        - containerPort: 3310
+          name: api
+          [rotocol: TCP
         livenessProbe:
           exec:
             command:
             - /readyness.sh
-          initialDelaySeconds: 20
-          timeoutSeconds: 2
+          initialDelaySeconds: 90
+          timeoutSeconds: 10
+          periodSeconds: 30
+          failureThreshold: 10
