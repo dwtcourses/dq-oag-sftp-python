@@ -46,13 +46,21 @@ Tasks include:
 
 The POD consists of 4 (four) Docker containers responsible for handling data.
 
-| Container Name | Function | Language | Managed by |
+| Container Name | Function | Language | Exposed port | Managed by |
 | :--- | :---: | :---: | ---: |
-| dq-oag-data-ingest | Manipulate data | Python2.7 | DQ Devops |
-| clamav-api | API for virus checks | N/A | ACP |
-| clamav | Database for virus checks | N/A | ACP |
-| s3-get | GET manifest database from S3 | Bash | DQ Devops | TODO
+| dq-oag-data-ingest | Data pipeline app| Python2.7 | N/A | DQ Devops |
+| clamav-api | API for virus checks | N/A | 8080 |ACP |
+| clamav | Database for virus checks | N/A | 3310 |ACP |
+| s3-get | GET manifest database from S3 | Bash | N/A |DQ Devops | TODO
 
+Data flow:
+
+- *dq-oag-data-ingest* pulls files from an external SFTP server
+- sending these files to *clamav-api* with destination *localhost:8080*
+- files are being sent from *clamav-api* to *clamav* with destination *localhost:3310*
+- *OK* or *!OK* response text is sent back to *dq-oag-data-ingest*
+  - *IF OK* file is uploaded to S3
+  - *IF !OK* file is moved to quarantine on the PVC
 
 ## Drone secrets
 
