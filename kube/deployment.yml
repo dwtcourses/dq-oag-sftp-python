@@ -94,35 +94,6 @@ spec:
         - name: oag-volume
           mountPath: /ADT
 
-      - name: nginx
-        image: quay.io/ukhomeofficedigital/nginx-proxy
-        imagePullPolicy: Always
-        env:
-          - name: PROXY_SERVICE_HOST
-            value: 'http://127.0.0.1'
-          - name: PROXY_SERVICE_PORT
-            value: '8080'
-          - name: NAXSI_USE_DEFAULT_RULES
-            value: 'FALSE'
-          - name: ENABLE_UUID_PARAM
-            value: 'FALSE'
-          - name: CLIENT_MAX_BODY_SIZE
-            value: '10'
-          - name: SSL_CERT
-            value: /etc/secrets/nginx.crt
-          - name: SSL_KEY
-            value: /etc/secrets/nginx.key
-        ports:
-         - name: https
-           containerPort: 443
-        resources:
-         limits:
-          cpu: 100m
-          memory: 400M
-        volumeMounts:
-          - mountPath: /etc/secrets
-            name: secrets
-
       - name: clamav-api
         image: quay.io/ukhomeofficedigital/clamav-rest
         imagePullPolicy: Always
