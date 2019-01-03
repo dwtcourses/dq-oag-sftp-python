@@ -119,7 +119,7 @@ spec:
         livenessProbe:
           exec:
             command:
-            - /healthcheck.sh
+            - /var/clamav-rest/healthcheck.sh
           initialDelaySeconds: 60
           timeoutSeconds: 10
           periodSeconds: 30

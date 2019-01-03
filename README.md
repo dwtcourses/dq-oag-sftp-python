@@ -1,6 +1,11 @@
 # dq-oag-sftp-python
 
 A collection of Docker containers running a data pipeline.
+Tasks include:
+- Download metadata DB from S3 to a persistent volume (TODO)
+- SFTP GET from a remote SFTP server
+- Running virus check on each file pulled from SFTP by sending them to ClamAV API
+- AWS S3 PUT files to an S3 bucket
 
 ## Dependencies
 
@@ -29,9 +34,29 @@ A collection of Docker containers running a data pipeline.
     - *test.py*: Test Python2.7 script
     - *docker.sh*: Download and run docker containers
     - *eicar.com*: File containing a test virus string
+- **kube/**
+  - *deployment.yml*: describe a Kubernetes POD deployment
+  - *pvc.yml*: declare a Persistent Volume in Kubernetes
+  - *secret.yml*: list the Drone secrets passed to the containers during deployment  
 - *.drone.yml*: CI deployment configuration
 - *LICENSE*: MIT license file
 - *README.md*: readme file
+
+## Kubernetes POD connectivity
+
+The POD consists of 4 (four) Docker containers responsible for handling data.
+
+| Container Name | Function | Language | Managed by |
+| :--- | :---: | :---: | ---: |
+| dq-oag-data-ingest | Manipulate data | Python2.7 | DQ Devops |
+| clamav-api | API for virus checks | N/A | ACP |
+| clamav | Database for virus checks | N/A | ACP |
+| s3-get | GET manifest database from S3 | Bash | DQ Devops | TODO
+
+
+## Drone secrets
+
+Environmental variables are set in Drone and they are passed to Kubernetes as required.
 
 ## Local Test suite
 
