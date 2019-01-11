@@ -10,14 +10,29 @@ set -e
 # Set variables
 
 # Used by sftp_server function
+echo "********************************************"
 echo "Setup sftp-server container variables:"
+echo "********************************************"
 echo "Enter pubkey location (full file path) and press [ENTER]: "
 read pubkey
 echo "Enter mountpoint location (full file path) and press [ENTER]: "
 read mountpoint
 
+# Used by postgresql function
+echo "********************************************"
+echo "Setup postgresql container variables:"
+echo "********************************************"
+echo "Enter postgresdb and press [ENTER]: "
+read postgresdb
+echo "Enter postgresuser and press [ENTER]: "
+read postgresuser
+echo "Enter postgrespass and press [ENTER]: "
+read postgrespass
+
 # Used by oag function
+echo "********************************************"
 echo "Setup OAG container variables"
+echo "********************************************"
 echo "Enter username and press [ENTER]: "
 read username
 echo "Enter sourcedir on SFTP server name and press [ENTER]: "
@@ -71,6 +86,37 @@ function clamav_api {
         echo "Created container with SHA: $run"
 }
 
+# Build PostgreSQL container
+
+function postgresql {
+  run=$(docker run --rm \
+        --name postgresql \
+        -e POSTGRES_PASSWORD=$postgrespass \
+        -e POSTGRES_USER=$postgresuser \
+        -e POSTGRES_DB=$postgresdb \
+        -d postgres
+       )
+       echo "Created container with SHA: $run"
+}
+
+# Build Postgres sidekick
+
+function postgresql_sidekick {
+  run=$(docker build \
+       -t psql/bash --rm \
+       --build-arg OAG_RDS_HOST='postgresql' \
+       --build-arg OAG_RDS_DATABASE=$postgresdb \
+       --build-arg OAG_RDS_USERNAME=$postgresuser \
+       --build-arg OAG_RDS_PASSWORD=$postgrespass \
+       --build-arg OAG_RDS_TABLE='oag' . && \
+       docker run \
+       --name psql \
+       --link postgresql:postgresql \
+       -d psql/bash
+       )
+       echo "Created container with SHA: $run"
+}
+
 # Build OAG container
 
 function oag {
@@ -87,8 +133,15 @@ function oag {
         -e S3_SECRET_ACCESS_KEY=$awssecret \
         -e CLAMAV_URL='clamav-api' \
         -e CLAMAV_PORT='8080' \
+        -e OAG_RDS_HOST='postgresql' \
+        -e OAG_RDS_DATABASE=$postgresdb \
+        -e OAG_RDS_USERNAME=$postgresuser \
+        -e OAG_RDS_PASSWORD=$postgrespass \
+        -e OAG_RDS_TABLE='oag' \
         -v $privkey:/home/runner/.ssh/id_rsa:ro \
-        --link clamav-api:clamav-api --link sftp-server:sftp-server \
+        --link clamav-api:clamav-api \
+        --link sftp-server:sftp-server \
+        --link postgresql:postgresql \
         -d python/oag
        )
        echo "Created container with SHA: $run"
@@ -107,25 +160,42 @@ function create_virus_file {
 }
 
 function main {
+  echo "********************************************"
+  echo "Building postgressql"
+  postgresql
+  echo "Done."
+  echo "********************************************"
+  echo "Building and running postgresql sidekick"
+  postgresql_sidekick
+  echo "Done."
+  echo "********************************************"
   echo "Building SFTP-server"
   sftp_server
   echo "Done."
+  echo "********************************************"
   echo "Building clamav"
   clamav
   echo "Done."
+  echo "********************************************"
   echo "Building clamav-api"
   clamav_api
   echo "Done."
+  echo "********************************************"
   echo "Building oag"
   oag
   echo "Done."
+  echo "********************************************"
   echo "Generating test files."
   echo "Creating OK test file and wait 5 seconds so that OAG container can process it. Waiting..."
   create_ok_file
   echo "Done."
+  echo "********************************************"
+  echo "Creating Virus test file. Waiting..."
   create_virus_file
   echo "Done."
+  echo "********************************************"
   echo "Check S3 and verify test files are there also check clamav logs to see the virus being blocked"
+  echo "********************************************"
 }
 
 main
