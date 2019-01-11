@@ -47,11 +47,10 @@ Tasks include:
 The POD consists of 4 (four) Docker containers responsible for handling data.
 
 | Container Name | Function | Language | Exposed port | Managed by |
-| :--- | :---: | :---: | ---: |
+| :--- | :---: | :---: | ---: | --- |
 | dq-oag-data-ingest | Data pipeline app| Python2.7 | N/A | DQ Devops |
 | clamav-api | API for virus checks | N/A | 8080 |ACP |
 | clamav | Database for virus checks | N/A | 3310 |ACP |
-| s3-get | GET manifest database from S3 | Bash | N/A |DQ Devops | TODO
 
 Data flow:
 
@@ -75,7 +74,7 @@ The containers can be started and a couple of test files generated using the *do
 The script will require the following variables passed in at runtime.
 
 |Name|Value|Required|Description|
-| --- |:---:| :---:| ---:|
+| --- |:---:| :---:| --- |
 | pubkey | /local/path/id_rsa.pub | True | Public SSH key used by the SFTP server|
 | privkey | /local/path/id_rsa | True | Private SSH used to connect to the SFTP server|
 | mountpoint|  /local/path/mountpoint-dir | True | SFTP source directory|
