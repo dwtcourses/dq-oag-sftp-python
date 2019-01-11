@@ -5,7 +5,7 @@
 
 # Move files from SFTP to local drive
 # Scan them using ClamAV
-# Upoad to S3
+# Upload to S3
 # Remove from local drive
 """
 import re
@@ -16,6 +16,7 @@ import gdbm
 import paramiko
 import boto3
 import requests
+import psycopg2
 
 
 SSH_REMOTE_HOST_MAYTECH = os.environ['MAYTECH_HOST']
@@ -32,21 +33,31 @@ S3_SECRET_ACCESS_KEY    = os.environ['S3_SECRET_ACCESS_KEY']
 S3_REGION_NAME          = os.environ['S3_REGION_NAME']
 BASE_URL                = os.environ['CLAMAV_URL']
 BASE_PORT               = os.environ['CLAMAV_PORT']
+RDS_HOST                = os.environ['OAG_RDS_HOST']
+RDS_DATABASE            = os.environ['OAG_RDS_DATABASE']
+RDS_USERNAME            = os.environ['OAG_RDS_USERNAME']
+RDS_PASSWORD            = os.environ['OAG_RDS_PASSWORD']
+RDS_TABLE               = os.environ['OAG_RDS_TABLE']
 
 def ssh_login(in_host, in_user, in_keyfile):
+    """
+    Login to SFTP
+    """
     logger = logging.getLogger()
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy()) ## This line can be removed when the host is added to the known_hosts file
     privkey = paramiko.RSAKey.from_private_key_file(in_keyfile)
     try:
         ssh.connect(in_host, username=in_user, pkey=privkey)
-    except Exception, e:
+    except Exception:
         logger.exception('SSH CONNECT ERROR')
-        os._exit(1)
     return ssh
 
 
 def run_virus_scan(filename):
+    """
+    Send a file to scanner API
+    """
     logger = logging.getLogger()
     logger.debug("Virus Scanning %s folder", filename)
     # do quarantine move using via the virus scanner
@@ -64,10 +75,40 @@ def run_virus_scan(filename):
             else:
                 logger.info('Virus scan OK')
     return True
-# end def run_virus_scan
 
+def rds_insert(table, filename):
+    """
+    Insert into table
+    """
+    logger = logging.getLogger()
+    try:
+        psql = "INSERT INTO (%s) VALUES (%s), (table, filename))"
+        cursor.execute(psql)
+        conn.commit()
+    except Exception:
+        logger.exception('INSERT ERROR')
+
+def rds_query(table, filename):
+    """
+    Query table
+    """
+    logger = logging.getLogger()
+    try:
+        psql = "SELECT * FROM (%s) VALUES (%s), (table, filename))"
+        cursor.execute(psql)
+        conn.commit()
+    except Exception:
+        logger.exception('Query ERROR')
+
+    if cursor.fetchone()[0]:
+        return 1
+    else:
+        return 0
 
 def main():
+    """
+    Main function
+    """
     parser = argparse.ArgumentParser(description='OAG SFTP Downloader')
     parser.add_argument('-D', '--DEBUG', default=False, action='store_true', help='Debug mode logging')
     args = parser.parse_args()
@@ -91,6 +132,8 @@ def main():
 
     # Main
     os.chdir('/ADT/scripts')
+    conn = psycopg2.connect(host=RDS_HOST, dbname=RDS_DATABASE, user=RDS_USERNAME, password=RDS_PASSWORD)
+    cursor = conn.cursor()
     oaghistory = gdbm.open('/ADT/scripts/oaghistory.db', 'c')
     if not os.path.exists(DOWNLOAD_DIR):
         os.makedirs(DOWNLOAD_DIR)
@@ -140,16 +183,16 @@ def main():
                     logger.debug("purge %s", file_xml)
                     sftp.remove(file_xml)
         # end for
-    except:
+    except Exception:
         logger.exception("Failure")
 # end with
 
 # batch virus scan on STAGING_DIR for OAG
     if run_virus_scan(STAGING_DIR):
-        for f in os.listdir(STAGING_DIR):
-            oaghistory[f] = 'R'
-            file_download = os.path.join(DOWNLOAD_DIR, f)
-            file_staging = os.path.join(STAGING_DIR, f)
+        for obj in os.listdir(STAGING_DIR):
+            oaghistory[obj] = 'R'
+            file_download = os.path.join(DOWNLOAD_DIR, obj)
+            file_staging = os.path.join(STAGING_DIR, obj)
             logger.info("Move %s from staging to download %s", file_staging, file_download)
             os.rename(file_staging, file_download)
             file_done_download = file_download + '.done'

@@ -21,7 +21,12 @@ module.exports = {
         S3_SECRET_ACCESS_KEY : process.argv[12],
         S3_REGION_NAME : "eu-west-2",
         CLAMAV_URL : process.argv[13],
-        CLAMAV_PORT : process.argv[14]
+        CLAMAV_PORT : process.argv[14],
+        OAG_RDS_HOST : process.argv[15],
+        OAG_RDS_DATABASE : process.argv[16],
+        OAG_RDS_USERNAME : process.argv[17],
+        OAG_RDS_PASSWORD : process.argv[18],
+        OAG_RDS_TABLE : process.argv[19]
       }
     }
   ]

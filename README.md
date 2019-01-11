@@ -84,12 +84,16 @@ The script will require the following variables passed in at runtime.
 | bucketname | s3-bucket-name | True | S3 bucket name |
 | keyprefix | prefix | True | S3 folder name |
 | awskeyid | ABCD | True | AWS access key ID |
-| awssecret| abcdb1234 | True | AWS Secret access key |
+| awssecret | abcdb1234 | True | AWS Secret access key |
+| postgresdb | db | True | Name of the PostgreSQL database |
+| postgresuser | user | True | Name of the PostgreSQL user |
+| postgrespass | pass | True | Password for _postgresuser_ |
 
 - Components:
   - SFTP container
   - ClamAV container
   - ClamAV REST API container
+  - PostgreSQL container
   - OAG Python container
 
 After the script has completed - for the first time it will take around 5 minutes to download all images - there should be a couple of test files in the S3 bucket:
