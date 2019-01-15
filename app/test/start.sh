@@ -33,10 +33,6 @@ read postgrespass
 echo "********************************************"
 echo "Setup OAG container variables"
 echo "********************************************"
-echo "Enter username and press [ENTER]: "
-read username
-echo "Enter sourcedir on SFTP server name and press [ENTER]: "
-read sourcedir
 echo "Enter bucketname and press [ENTER]: "
 read bucketname
 echo "Enter keyprefix and press [ENTER]: "
@@ -54,10 +50,10 @@ read privkey
 function sftp_server {
   run=$(docker run --rm \
         --name sftp-server \
-        -v $pubkey:/home/$username/.ssh/authorized_keys:ro \
-        -v $mountpoint:/home/$username/$sourcedir \
+        -v $pubkey:/home/test/.ssh/authorized_keys:ro \
+        -v $mountpoint:/home/test/test \
         -p 2222:22 -d atmoz/sftp \
-        $username::1000
+        test::1000
         )
         echo "Created container with SHA: $run"
 }
@@ -121,12 +117,12 @@ function postgresql_sidekick {
 
 function oag {
   run=$(docker build -t python/oag --rm ../. && \
-        docker run --rm \
+        docker run \
         --name oag \
         -e SSH_REMOTE_HOST_MAYTECH='sftp-server' \
-        -e SSH_REMOTE_USER_MAYTECH=$username \
+        -e SSH_REMOTE_USER_MAYTECH='test' \
         -e SSH_PRIVATE_KEY='/home/runner/.ssh/id_rsa' \
-        -e SSH_LANDING_DIR=$sourcedir \
+        -e SSH_LANDING_DIR='test' \
         -e S3_BUCKET_NAME=$bucketname \
         -e S3_KEY_PREFIX=$keyprefix \
         -e S3_ACCESS_KEY_ID=$awskeyid \
@@ -165,10 +161,6 @@ function main {
   postgresql
   echo "Done."
   echo "********************************************"
-  echo "Building and running postgresql sidekick"
-  postgresql_sidekick
-  echo "Done."
-  echo "********************************************"
   echo "Building SFTP-server"
   sftp_server
   echo "Done."
@@ -179,6 +171,10 @@ function main {
   echo "********************************************"
   echo "Building clamav-api"
   clamav_api
+  echo "Done."
+  echo "********************************************"
+  echo "Building and running postgresql sidekick"
+  postgresql_sidekick
   echo "Done."
   echo "********************************************"
   echo "Building oag"

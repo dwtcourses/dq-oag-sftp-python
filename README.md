@@ -22,7 +22,6 @@ Tasks include:
   - *Dockerfile*: describe what is installed in the container and the Python file that needs to run
   - *docker-entrypoint.sh*: bash scripts running at container startup
   - *packages.txt*: Python custom Modules
-  - *test.py*: mock script that is running in the container
   - *ecosystem.config.js*: declare variables used by PM2 at runtime
   - **bin/**
     - *DQ_OAG_file_ingest*: Python script used with PM2 to declare imported files to PM2 at runtime
@@ -31,8 +30,10 @@ Tasks include:
     - *DQ_OAG_file_ingest.py*: Python2.7 script running within the container
     - *settings.py*: declare variables passed to the *DQ_OAG_file_ingest.py* file at runtime
   - **test/**
+    - *Dockerfile*: PostgreSQL sidekick container config
     - *test.py*: Test Python2.7 script
-    - *docker.sh*: Download and run docker containers
+    - *start.sh*: Download and run Docker containers
+    - *stop.sh*: Stop and remove **all** Docker containers
     - *eicar.com*: File containing a test virus string
 - **kube/**
   - *deployment.yml*: describe a Kubernetes POD deployment
@@ -70,7 +71,7 @@ Environmental variables are set in Drone and they are passed to Kubernetes as re
 Testing the OAG Python script can be done by having access to AWS S3 and docker.
 The full stack comprise of 4 (four) Docker containers within the same network linked to each other so DNS name resolution works between the components.
 
-The containers can be started and a couple of test files generated using the *docker.sh* script located in **app/test**.
+The containers can be started and a couple of test files generated using the *start.sh* script located in **app/test**.
 The script will require the following variables passed in at runtime.
 
 |Name|Value|Required|Description|
@@ -78,8 +79,6 @@ The script will require the following variables passed in at runtime.
 | pubkey | /local/path/id_rsa.pub | True | Public SSH key used by the SFTP server|
 | privkey | /local/path/id_rsa | True | Private SSH used to connect to the SFTP server|
 | mountpoint|  /local/path/mountpoint-dir | True | SFTP source directory|
-| username | sftp_user | True| Mock SFTP local user|
-| sourcedir | mountpoint-dir | True | Name of the SFTP source directory
 | bucketname | s3-bucket-name | True | S3 bucket name |
 | keyprefix | prefix | True | S3 folder name |
 | awskeyid | ABCD | True | AWS access key ID |
@@ -93,6 +92,7 @@ The script will require the following variables passed in at runtime.
   - ClamAV container
   - ClamAV REST API container
   - PostgreSQL container
+  - PostgreSQL sidekick container
   - OAG Python container
 
 After the script has completed - for the first time it will take around 5 minutes to download all images - there should be a couple of test files in the S3 bucket:
@@ -111,5 +111,11 @@ The other test file contains a test virus string and it will be located under if
 NOTE: navigate to **app/test** first.
 
 ```
-sh docker.sh
+sh start.sh
+```
+
+- When done with testing stop the test suite
+
+```
+sh stop.sh
 ```

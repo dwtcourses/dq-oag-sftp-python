@@ -12,11 +12,11 @@ import re
 import os
 import argparse
 import logging
-import gdbm
 import paramiko
 import boto3
 import requests
 import psycopg2
+from psycopg2 import sql
 
 
 SSH_REMOTE_HOST_MAYTECH = os.environ['MAYTECH_HOST']
@@ -39,6 +39,11 @@ RDS_USERNAME            = os.environ['OAG_RDS_USERNAME']
 RDS_PASSWORD            = os.environ['OAG_RDS_PASSWORD']
 RDS_TABLE               = os.environ['OAG_RDS_TABLE']
 
+# Setup RDS connection
+
+CONN = psycopg2.connect(host=RDS_HOST, dbname=RDS_DATABASE, user=RDS_USERNAME, password=RDS_PASSWORD)
+CUR = CONN.cursor()
+
 def ssh_login(in_host, in_user, in_keyfile):
     """
     Login to SFTP
@@ -52,7 +57,6 @@ def ssh_login(in_host, in_user, in_keyfile):
     except Exception:
         logger.exception('SSH CONNECT ERROR')
     return ssh
-
 
 def run_virus_scan(filename):
     """
@@ -82,9 +86,8 @@ def rds_insert(table, filename):
     """
     logger = logging.getLogger()
     try:
-        psql = "INSERT INTO (%s) VALUES (%s), (table, filename))"
-        cursor.execute(psql)
-        conn.commit()
+        CUR.execute(sql.SQL("INSERT INTO {} values (%s)").format(sql.Identifier(table)), (filename,))
+        CONN.commit()
     except Exception:
         logger.exception('INSERT ERROR')
 
@@ -94,13 +97,11 @@ def rds_query(table, filename):
     """
     logger = logging.getLogger()
     try:
-        psql = "SELECT * FROM (%s) VALUES (%s), (table, filename))"
-        cursor.execute(psql)
-        conn.commit()
+        CUR.execute(sql.SQL("SELECT * FROM {} WHERE filename = (%s)").format(sql.Identifier(table)), (filename,))
+        CONN.commit()
     except Exception:
-        logger.exception('Query ERROR')
-
-    if cursor.fetchone()[0]:
+        logger.exception('QUERY ERROR')
+    if CUR.fetchone():
         return 1
     else:
         return 0
@@ -132,9 +133,6 @@ def main():
 
     # Main
     os.chdir('/ADT/scripts')
-    conn = psycopg2.connect(host=RDS_HOST, dbname=RDS_DATABASE, user=RDS_USERNAME, password=RDS_PASSWORD)
-    cursor = conn.cursor()
-    oaghistory = gdbm.open('/ADT/scripts/oaghistory.db', 'c')
     if not os.path.exists(DOWNLOAD_DIR):
         os.makedirs(DOWNLOAD_DIR)
     if not os.path.exists(STAGING_DIR):
@@ -158,30 +156,37 @@ def main():
             match = re.search('^1124_(SH)?(\d\d\d\d)_(\d\d)_(\d\d)_(\d\d)_(\d\d)_(\d\d)(.*?)\.xml$', file_xml, re.I)
             download = False
             if match is not None:
-                if file_xml not in oaghistory.keys():
-                    oaghistory[file_xml] = 'N' # new
-
-                if oaghistory[file_xml] == 'N':
+                try:
+                    result = rds_query(RDS_TABLE, file_xml)
+                except Exception:
+                    logger.exception("Error running SQL query")
+                if result == 0:
                     download = True
-            else:
-                logger.info("Skipping %s", file_xml)
-                continue
+                    logger.info("File %s downloaded", file_xml)
+                    rds_insert(RDS_TABLE, file_xml)
+                    logger.info("File %s added to RDS", file_xml)
+                else:
+                    logger.info("Skipping %s", file_xml)
+                    continue
 
             file_xml_staging = os.path.join(STAGING_DIR, file_xml)
 
             #protection against redownload
             if os.path.isfile(file_xml_staging) and os.path.getsize(file_xml_staging) > 0 and os.path.getsize(file_xml_staging) == sftp.stat(file_xml).st_size:
-                logger.info("File exists")
                 download = False
-                oaghistory[file_xml] = 'R' # ready
-                logger.debug("purge %s", file_xml)
-                sftp.remove(file_xml)
+                purge = rds_query(RDS_TABLE, file_xml)
+                if purge == 1:
+                    sftp.remove(file_xml)
+                    logger.info("Purge %s", file_xml)
             if download:
                 logger.info("Downloading %s to %s", file_xml, file_xml_staging)
                 sftp.get(file_xml, file_xml_staging) # remote, local
                 if os.path.isfile(file_xml_staging) and os.path.getsize(file_xml_staging) > 0 and os.path.getsize(file_xml_staging) == sftp.stat(file_xml).st_size:
-                    logger.debug("purge %s", file_xml)
+                    logger.info("Purge %s", file_xml)
                     sftp.remove(file_xml)
+                else:
+                    logger.error("Could not purge %s from SFTP", file_xml)
+                    continue
         # end for
     except Exception:
         logger.exception("Failure")
@@ -190,22 +195,23 @@ def main():
 # batch virus scan on STAGING_DIR for OAG
     if run_virus_scan(STAGING_DIR):
         for obj in os.listdir(STAGING_DIR):
-            oaghistory[obj] = 'R'
-            file_download = os.path.join(DOWNLOAD_DIR, obj)
-            file_staging = os.path.join(STAGING_DIR, obj)
-            logger.info("Move %s from staging to download %s", file_staging, file_download)
-            os.rename(file_staging, file_download)
-            file_done_download = file_download + '.done'
-            open(file_done_download, 'w').close()
-            downloadcount += 1
-
-    oaghistory.close()
+            scanner = rds_query(RDS_TABLE, obj)
+            if scanner == 1:
+                file_download = os.path.join(DOWNLOAD_DIR, obj)
+                file_staging = os.path.join(STAGING_DIR, obj)
+                logger.info("Move %s from staging to download %s", file_staging, file_download)
+                os.rename(file_staging, file_download)
+                file_done_download = file_download + '.done'
+                open(file_done_download, 'w').close()
+                downloadcount += 1
+            else:
+                logger.error("Could not run virus scan on %s", obj)
     logger.info("Downloaded %s files", downloadcount)
 
 
 # Move files to S3
     logger.info("Starting to move files to S3")
-    processed_oag_file_list = [f for f in os.listdir(DOWNLOAD_DIR)]
+    processed_oag_file_list = [filename for filename in os.listdir(DOWNLOAD_DIR)]
     boto_s3_session = boto3.Session(
         aws_access_key_id=S3_ACCESS_KEY_ID,
         aws_secret_access_key=S3_SECRET_ACCESS_KEY,
@@ -221,7 +227,10 @@ def main():
                 os.remove(full_filepath)
                 logger.info("Deleting local file: %s", filename)
                 uploadcount += 1
-                logger.info("Uploaded %s files", uploadcount)
+            else:
+                logger.error("Failed to upload %s", filename)
+
+    logger.info("Uploaded %s files", uploadcount)
 
 # end def main
 
