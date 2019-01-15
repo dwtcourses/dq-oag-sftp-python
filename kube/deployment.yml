@@ -24,7 +24,7 @@ spec:
         persistentVolumeClaim:
           claimName: oag-volume
       containers:
-        
+
       - name: dq-oag-data-ingest
         image: quay.io/ukhomeofficedigital/dq-oag-sftp-docker:{{.DRONE_COMMIT_SHA}}
         imagePullPolicy: Always
@@ -84,6 +84,26 @@ spec:
               secretKeyRef:
                 name: dq-oag-data-ingest
                 key: S3_SECRET_ACCESS_KEY
+          - name: OAG_RDS_HOST
+            valueFrom:
+              secretKeyRef:
+                name: dq-oag-data-ingest
+                key: OAG_RDS_HOST
+          - name: OAG_RDS_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: dq-oag-data-ingest
+                key: OAG_RDS_USERNAME
+          - name: OAG_RDS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: dq-oag-data-ingest
+                key: OAG_RDS_PASSWORD
+          - name: OAG_RDS_TABLE
+            valueFrom:
+              secretKeyRef:
+                name: dq-oag-data-ingest
+                key: OAG_RDS_TABLE
           - name: CLAMAV_URL
             value: "127.0.0.1"
           - name: CLAMAV_PORT
