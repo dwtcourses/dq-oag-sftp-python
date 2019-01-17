@@ -2,7 +2,6 @@
 
 A collection of Docker containers running a data pipeline.
 Tasks include:
-- Download metadata DB from S3 to a persistent volume (TODO)
 - SFTP GET from a remote SFTP server
 - Running virus check on each file pulled from SFTP by sending them to ClamAV API
 - AWS S3 PUT files to an S3 bucket
@@ -13,7 +12,7 @@ Tasks include:
 - Python2.7
 - Drone
 - AWS CLI
-- AWS Keys with PUT/GET access to S3
+- AWS Keys with PUT access to S3
 - Kubernetes
 
 ## Structure
@@ -32,7 +31,7 @@ Tasks include:
   - **test/**
     - *Dockerfile*: PostgreSQL sidekick container config
     - *test.py*: Test Python2.7 script
-    - *start.sh*: Download and run Docker containers
+    - *start.sh*: Download, build and run Docker containers
     - *stop.sh*: Stop and remove **all** Docker containers
     - *eicar.com*: File containing a test virus string
 - **kube/**
@@ -45,7 +44,7 @@ Tasks include:
 
 ## Kubernetes POD connectivity
 
-The POD consists of 4 (four) Docker containers responsible for handling data.
+The POD consists of 3 (three) Docker containers responsible for handling data.
 
 | Container Name | Function | Language | Exposed port | Managed by |
 | :--- | :---: | :---: | ---: | --- |
@@ -64,7 +63,7 @@ Data flow:
 
 ## Drone secrets
 
-Environmental variables are set in Drone and they are passed to Kubernetes as required.
+Environmental variables are set in Drone based on secrets listed in the *.drone.yml* file and they are passed to Kubernetes as required.
 
 ## Local Test suite
 

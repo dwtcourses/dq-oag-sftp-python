@@ -64,5 +64,4 @@ pipeline:
       - NOTPROD_OAG_RDS_PASSWORD
       - NOTPROD_OAG_RDS_TABLE
     when:
-      branch: master
       event: push
