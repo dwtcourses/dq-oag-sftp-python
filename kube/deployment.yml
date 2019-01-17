@@ -89,6 +89,11 @@ spec:
               secretKeyRef:
                 name: dq-oag-data-ingest
                 key: OAG_RDS_HOST
+          - name: OAG_RDS_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name: dq-oag-data-ingest
+                key: OAG_RDS_DATABASE
           - name: OAG_RDS_USERNAME
             valueFrom:
               secretKeyRef:
@@ -100,7 +105,10 @@ spec:
                 name: dq-oag-data-ingest
                 key: OAG_RDS_PASSWORD
           - name: OAG_RDS_TABLE
-            value: "oag"
+            valueFrom:
+              secretKeyRef:
+                name: dq-oag-data-ingest
+                key: OAG_RDS_TABLE
           - name: CLAMAV_URL
             value: "127.0.0.1"
           - name: CLAMAV_PORT
