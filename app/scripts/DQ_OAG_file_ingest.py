@@ -206,8 +206,10 @@ def main():
                 downloadcount += 1
             else:
                 logger.error("Could not run virus scan on %s", obj)
+                break
     logger.info("Downloaded %s files", downloadcount)
-
+    logger.info("Closing connection to RDS")
+    CONN.close()
 
 # Move files to S3
     logger.info("Starting to move files to S3")
@@ -219,11 +221,11 @@ def main():
     )
     if processed_oag_file_list:
         for filename in processed_oag_file_list:
-            s3 = boto_s3_session.client("s3")
+            s3_conn = boto_s3_session.client("s3")
             full_filepath = os.path.join(DOWNLOAD_DIR, filename)
             logger.info("Copying %s to S3", filename)
             if os.path.isfile(full_filepath):
-                s3.upload_file(full_filepath, BUCKET_NAME, BUCKET_KEY_PREFIX + "/" + filename)
+                s3_conn.upload_file(full_filepath, BUCKET_NAME, BUCKET_KEY_PREFIX + "/" + filename)
                 os.remove(full_filepath)
                 logger.info("Deleting local file: %s", filename)
                 uploadcount += 1
