@@ -6,6 +6,7 @@
 # - requests running user to supply values used as variables
 
 set -e
+set -x
 
 # Set variables
 
@@ -24,6 +25,8 @@ echo "Setup postgresql container variables:"
 echo "********************************************"
 echo "Enter postgresdb and press [ENTER]: "
 read postgresdb
+echo "Enter postgrestable and press [ENTER]: "
+read postgrestable
 echo "Enter postgresuser and press [ENTER]: "
 read postgresuser
 echo "Enter postgrespass and press [ENTER]: "
@@ -104,8 +107,8 @@ function postgresql_sidekick {
        --build-arg OAG_RDS_DATABASE=$postgresdb \
        --build-arg OAG_RDS_USERNAME=$postgresuser \
        --build-arg OAG_RDS_PASSWORD=$postgrespass \
-       --build-arg OAG_RDS_TABLE='oag' . && \
-       docker run \
+       --build-arg OAG_RDS_TABLE=$postgrestable . && \
+       docker run --rm \
        --name psql \
        --link postgresql:postgresql \
        -d psql/bash
@@ -133,7 +136,7 @@ function oag {
         -e OAG_RDS_DATABASE=$postgresdb \
         -e OAG_RDS_USERNAME=$postgresuser \
         -e OAG_RDS_PASSWORD=$postgrespass \
-        -e OAG_RDS_TABLE='oag' \
+        -e OAG_RDS_TABLE=$postgrestable \
         -v $privkey:/home/runner/.ssh/id_rsa:ro \
         --link clamav-api:clamav-api \
         --link sftp-server:sftp-server \

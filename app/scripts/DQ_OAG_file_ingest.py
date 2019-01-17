@@ -208,8 +208,6 @@ def main():
                 logger.error("Could not run virus scan on %s", obj)
                 break
     logger.info("Downloaded %s files", downloadcount)
-    logger.info("Closing connection to RDS")
-    CONN.close()
 
 # Move files to S3
     logger.info("Starting to move files to S3")
