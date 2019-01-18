@@ -67,8 +67,8 @@ Environmental variables are set in Drone based on secrets listed in the *.drone.
 
 ## Local Test suite
 
-Testing the OAG Python script can be done by having access to AWS S3 and docker.
-The full stack comprise of 4 (four) Docker containers within the same network linked to each other so DNS name resolution works between the components.
+Testing the OAG Python script can be done by having access to AWS S3 and Docker.
+The full stack comprise of 6 Docker containers within the same network linked to each other so DNS name resolution works between the components.
 
 The containers can be started and a couple of test files generated using the *start.sh* script located in **app/test**.
 The script will require the following variables passed in at runtime.
@@ -83,6 +83,7 @@ The script will require the following variables passed in at runtime.
 | awskeyid | ABCD | True | AWS access key ID |
 | awssecret | abcdb1234 | True | AWS Secret access key |
 | postgresdb | db | True | Name of the PostgreSQL database |
+| postgrestable | table | True | Name of a table in the database |
 | postgresuser | user | True | Name of the PostgreSQL user |
 | postgrespass | pass | True | Password for _postgresuser_ |
 
@@ -100,13 +101,14 @@ After the script has completed - for the first time it will take around 5 minute
 1124_YYYY_MM_DD_HH_MM_SS.xml
 1124_YYYY_MM_DD_HH_MM_SS.xml.done
 ```
-The other test file contains a test virus string and it will be located under if the ClamAV scan worked as expected:
+The other test file contains a test virus string and it will be located under:
 
 ```
 /ADT/quarantine/oag/1124_YYYY_MM_DD_HH_MM_SS.xml
 ```
 
 - Launching the test suite
+
 NOTE: navigate to **app/test** first.
 
 ```
@@ -114,6 +116,8 @@ sh start.sh
 ```
 
 - When done with testing stop the test suite
+
+NOTE: **all** running containers will be stopped
 
 ```
 sh stop.sh

@@ -1,10 +1,9 @@
 #!/bin/bash
-# Cleanup all test containers by stopping and removing them.
+# Cleanup all test containers by stopping them.
 # The images downloaded will stay however.
 
 set -e
 
 docker stop $(docker ps -aq)
-docker rm $(docker ps -aq)
 
 exit

@@ -120,7 +120,7 @@ function postgresql_sidekick {
 
 function oag {
   run=$(docker build -t python/oag --rm ../. && \
-        docker run \
+        docker run --rm \
         --name oag \
         -e SSH_REMOTE_HOST_MAYTECH='sftp-server' \
         -e SSH_REMOTE_USER_MAYTECH='test' \
