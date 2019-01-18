@@ -1,7 +1,8 @@
 # dq-oag-sftp-python
 
-A collection of Docker containers running a data pipeline.
+A collection of Docker containers and RDS instance running a data pipeline.
 Tasks include:
+- SFTP LIST and check against a table in RDS PostgreSQL, add if required
 - SFTP GET from a remote SFTP server
 - Running virus check on each file pulled from SFTP by sending them to ClamAV API
 - AWS S3 PUT files to an S3 bucket
@@ -13,6 +14,7 @@ Tasks include:
 - Drone
 - AWS CLI
 - AWS Keys with PUT access to S3
+- AWS RDS PostgreSQL
 - Kubernetes
 
 ## Structure
@@ -52,13 +54,27 @@ The POD consists of 3 (three) Docker containers responsible for handling data.
 | clamav-api | API for virus checks | N/A | 8080 |ACP |
 | clamav | Database for virus checks | N/A | 3310 |ACP |
 
-Data flow:
 
-- *dq-oag-data-ingest* pulls files from an external SFTP server
+## RDS PostgreSQL connectivity
+
+The RDS instance is stand alone and not part of the POD or this deployment. This **README.md** assumes the instance has been configured prior to deployment of the POD and include:
+
+- Database
+- Table
+- User
+- Password
+
+The *dq-oag-data-ingest* container connects to the PostgreSQL backend at each run using its DNS host name, username, database and password.
+
+## Data flow
+
+- *dq-oag-data-ingest* lists files on an SFTP server and only move to the next step of the file does not yet exist in the RDS database table
+- *dq-oag-data-ingest* GET files from an external SFTP server
+- *dq-oag-data-ingest* DELETE files from SFTP
 - sending these files to *clamav-api* with destination *localhost:8080*
 - files are being sent from *clamav-api* to *clamav* with destination *localhost:3310*
 - *OK* or *!OK* response text is sent back to *dq-oag-data-ingest*
-  - *IF OK* file is uploaded to S3
+  - *IF OK* file is uploaded to S3 and deleted from local storage
   - *IF !OK* file is moved to quarantine on the PVC
 
 ## Drone secrets
