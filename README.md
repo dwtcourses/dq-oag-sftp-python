@@ -57,7 +57,7 @@ The POD consists of 3 (three) Docker containers responsible for handling data.
 
 ## RDS PostgreSQL connectivity
 
-The RDS instance is stand alone and not part of the POD or this deployment. This **README.md** assumes the instance has been configured prior to deployment of the POD and include:
+The RDS instance is stand alone and not part of the POD or this deployment. This **README.md** assumes the instance has been configured prior to deployment of the POD and includes:
 
 - Database
 - Table
