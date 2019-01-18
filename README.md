@@ -84,7 +84,7 @@ Environmental variables are set in Drone based on secrets listed in the *.drone.
 ## Local Test suite
 
 Testing the OAG Python script can be done by having access to AWS S3 and Docker.
-The full stack comprise of 6 Docker containers within the same network linked to each other so DNS name resolution works between the components.
+The full stack comprises of 6 Docker containers within the same network linked to each other so DNS name resolution works between the components.
 
 The containers can be started and a couple of test files generated using the *start.sh* script located in **app/test**.
 The script will require the following variables passed in at runtime.
