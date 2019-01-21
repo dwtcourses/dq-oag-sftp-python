@@ -65,3 +65,57 @@ pipeline:
       - NOTPROD_OAG_RDS_TABLE
     when:
       event: push
+
+  deploy_to_production:
+    image: quay.io/ukhomeofficedigital/kd
+    environment:
+      - KUBE_NAMESPACE=dq-apps
+      - INSECURE_SKIP_TLS_VERIFY=true
+      - OAG_PVC_SIZE=5Gi
+      - OAG_CPU_REQUEST=2
+      - OAG_CPU_LIMIT=2.5
+      - OAG_RAM_REQUEST=3Gi
+      - OAG_RAM_LIMIT=4Gi
+      - CLAMAV_CPU_REQUEST=2
+      - CLAMAV_CPU_LIMIT=2.5
+      - CLAMAV_RAM_REQUEST=3Gi
+      - CLAMAV_RAM_LIMIT=4Gi
+    commands:
+      - export KUBE_TOKEN=$$PROD_KUBE_TOKEN
+      - export KUBE_SERVER=$$PROD_KUBE_SERVER
+      - export SSH_REMOTE_HOST_MAYTECH=$$PROD_SSH_REMOTE_HOST_MAYTECH
+      - export SSH_REMOTE_USER_MAYTECH=$$PROD_SSH_REMOTE_USER_MAYTECH
+      - export SSH_PRIVATE_KEY=$$PROD_SSH_PRIVATE_KEY_PATH
+      - export PRIVATE_KEY=$$PROD_SSH_PRIVATE_KEY
+      - export SSH_LANDING_DIR=$$PROD_SSH_LANDING_DIR
+      - export S3_BUCKET_NAME=$$PROD_S3_BUCKET_NAME
+      - export S3_KEY_PREFIX=$$PROD_S3_KEY_PREFIX
+      - export S3_ACCESS_KEY_ID=$$PROD_S3_ACCESS_KEY_ID
+      - export S3_SECRET_ACCESS_KEY=$$PROD_S3_SECRET_ACCESS_KEY
+      - export OAG_RDS_HOST=$$PROD_OAG_RDS_HOST
+      - export OAG_RDS_DATABASE=$$PROD_OAG_RDS_DATABASE
+      - export OAG_RDS_USERNAME=$$PROD_OAG_RDS_USERNAME
+      - export OAG_RDS_PASSWORD=$$PROD_OAG_RDS_PASSWORD
+      - export OAG_RDS_TABLE=$$PROD_OAG_RDS_TABLE
+      - kd -f kube/pvc.yml -f kube/secret.yml -f kube/deployment.yml
+    secrets:
+      - PROD_KUBE_TOKEN
+      - PROD_KUBE_SERVER
+      - PROD_SSH_REMOTE_HOST_MAYTECH
+      - PROD_SSH_REMOTE_USER_MAYTECH
+      - PROD_SSH_PRIVATE_KEY
+      - PROD_SSH_PRIVATE_KEY_PATH
+      - PROD_SSH_LANDING_DIR
+      - PROD_S3_BUCKET_NAME
+      - PROD_S3_KEY_PREFIX
+      - PROD_S3_ACCESS_KEY_ID
+      - PROD_S3_SECRET_ACCESS_KEY
+      - PROD_OAG_RDS_HOST
+      - PROD_OAG_RDS_DATABASE
+      - PROD_OAG_RDS_USERNAME
+      - PROD_OAG_RDS_PASSWORD
+      - PROD_OAG_RDS_TABLE
+    when:
+      environment: production
+      branch: master
+      event: deployment
