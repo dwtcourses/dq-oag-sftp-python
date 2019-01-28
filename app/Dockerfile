@@ -1,4 +1,4 @@
-FROM python:2.7
+FROM python:3
 
 ENV USERMAP_UID 1000
 ENV PYTHONPATH="$PYTHONPATH:/ADT"
@@ -31,14 +31,7 @@ RUN groupadd -r runner && \
     chown -R runner:runner /home/runner/.ssh
 
 # Install script dependencies
-RUN apt-get install git wget
 RUN apt-get update -y && apt-get upgrade -y
-RUN wget http://ftp.gnu.org/gnu/gdbm/gdbm-1.8.3.tar.gz && \
-    tar -xvzf gdbm-1.8.3.tar.gz && \
-    cd gdbm-1.8.3 && \
-    ./configure --prefix=/usr && \
-    make && \
-    make BINOWN=root BINGRP=root install
 RUN pip install --no-cache-dir -r /tmp/ADT/scripts/packages.txt
 
 # Install PM2
