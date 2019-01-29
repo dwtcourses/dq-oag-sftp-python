@@ -6,7 +6,6 @@
 # - requests running user to supply values used as variables
 
 set -e
-set -x
 
 # Set variables
 
@@ -18,19 +17,6 @@ echo "Enter pubkey location (full file path) and press [ENTER]: "
 read pubkey
 echo "Enter mountpoint location (full file path) and press [ENTER]: "
 read mountpoint
-
-# Used by postgresql function
-echo "********************************************"
-echo "Setup postgresql container variables:"
-echo "********************************************"
-echo "Enter postgresdb and press [ENTER]: "
-read postgresdb
-echo "Enter postgrestable and press [ENTER]: "
-read postgrestable
-echo "Enter postgresuser and press [ENTER]: "
-read postgresuser
-echo "Enter postgrespass and press [ENTER]: "
-read postgrespass
 
 # Used by oag function
 echo "********************************************"
@@ -47,6 +33,18 @@ read awssecret
 echo "Enter privkey location (full file path) and press [ENTER]: "
 read privkey
 
+# Create random password
+echo "********************************************"
+randompass=$(openssl rand -hex 24)
+echo "Random password generated: $randompass"
+
+# Create random user
+echo "********************************************"
+username=$(openssl rand -hex 6)
+echo "Random username generated: $username"
+
+database='foo'
+table='bar'
 
 # Build SFTP container
 
@@ -90,9 +88,9 @@ function clamav_api {
 function postgresql {
   run=$(docker run --rm \
         --name postgresql \
-        -e POSTGRES_PASSWORD=$postgrespass \
-        -e POSTGRES_USER=$postgresuser \
-        -e POSTGRES_DB=$postgresdb \
+        -e POSTGRES_PASSWORD=$randompass \
+        -e POSTGRES_USER=$username \
+        -e POSTGRES_DB=$database \
         -d postgres
        )
        echo "Created container with SHA: $run"
@@ -104,10 +102,10 @@ function postgresql_sidekick {
   run=$(docker build \
        -t psql/bash --rm \
        --build-arg OAG_RDS_HOST='postgresql' \
-       --build-arg OAG_RDS_DATABASE=$postgresdb \
-       --build-arg OAG_RDS_USERNAME=$postgresuser \
-       --build-arg OAG_RDS_PASSWORD=$postgrespass \
-       --build-arg OAG_RDS_TABLE=$postgrestable . && \
+       --build-arg OAG_RDS_DATABASE=$database \
+       --build-arg OAG_RDS_USERNAME=$username \
+       --build-arg OAG_RDS_PASSWORD=$randompass \
+       --build-arg OAG_RDS_TABLE=$table . && \
        docker run --rm \
        --name psql \
        --link postgresql:postgresql \
@@ -133,10 +131,10 @@ function oag {
         -e CLAMAV_URL='clamav-api' \
         -e CLAMAV_PORT='8080' \
         -e OAG_RDS_HOST='postgresql' \
-        -e OAG_RDS_DATABASE=$postgresdb \
-        -e OAG_RDS_USERNAME=$postgresuser \
-        -e OAG_RDS_PASSWORD=$postgrespass \
-        -e OAG_RDS_TABLE=$postgrestable \
+        -e OAG_RDS_DATABASE=$database \
+        -e OAG_RDS_USERNAME=$username \
+        -e OAG_RDS_PASSWORD=$randompass \
+        -e OAG_RDS_TABLE=$table \
         -v $privkey:/home/runner/.ssh/id_rsa:ro \
         --link clamav-api:clamav-api \
         --link sftp-server:sftp-server \

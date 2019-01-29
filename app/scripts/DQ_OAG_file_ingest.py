@@ -188,6 +188,8 @@ def main():
                 else:
                     logger.error("Could not purge %s from SFTP", file_xml)
                     continue
+        sftp.close()
+        ssh.close()
         # end for
     except Exception:
         logger.exception("Failure")

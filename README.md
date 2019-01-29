@@ -98,10 +98,6 @@ The script will require the following variables passed in at runtime.
 | keyprefix | prefix | True | S3 folder name |
 | awskeyid | ABCD | True | AWS access key ID |
 | awssecret | abcdb1234 | True | AWS Secret access key |
-| postgresdb | db | True | Name of the PostgreSQL database |
-| postgrestable | table | True | Name of a table in the database |
-| postgresuser | user | True | Name of the PostgreSQL user |
-| postgrespass | pass | True | Password for _postgresuser_ |
 
 - Components:
   - SFTP container
