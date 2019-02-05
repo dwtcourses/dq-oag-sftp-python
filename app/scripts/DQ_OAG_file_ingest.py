@@ -249,7 +249,7 @@ def main():
                     secondary_bucket_key_prefix = time.strftime("%Y-%m-%d/%H:%M:%S.%f")
                     secondary_full_filepath = os.path.join(DOWNLOAD_DIR, filename)
                     secondary_s3_conn = boto_secondary_s3_session.client("s3")
-                    logger.info("Copying %s to S3 secondary bucket", filename)
+                    logger.info("Copying %s to S3 %s bucket", filename, SECONDARY_BUCKET_NAME)
                     secondary_s3_conn.upload_file(secondary_full_filepath,
                                                   SECONDARY_BUCKET_NAME,
                                                   secondary_bucket_key_prefix + "/" + filename)
@@ -257,7 +257,7 @@ def main():
                     logger.exception("Failed to upload %s, exiting...", filename)
                     break
         secondary_uploadcount += 1
-        logger.info("Uploaded %s files to %s secondary", secondary_uploadcount, SECONDARY_BUCKET_NAME)
+        logger.info("Uploaded %s files to %s", secondary_uploadcount, SECONDARY_BUCKET_NAME)
 # Cleaning up
     for filename in processed_oag_file_list:
         try:
