@@ -10,8 +10,9 @@
 """
 import re
 import os
-import argparse
+import datetime
 import logging
+from logging.handlers import TimedRotatingFileHandler
 import paramiko
 import boto3
 import requests
@@ -19,30 +20,37 @@ import psycopg2
 from psycopg2 import sql
 
 
-SSH_REMOTE_HOST_MAYTECH = os.environ['MAYTECH_HOST']
-SSH_REMOTE_USER_MAYTECH = os.environ['MAYTECH_USER']
-SSH_PRIVATE_KEY         = os.environ['MAYTECH_OAG_PRIVATE_KEY_PATH']
-SSH_LANDING_DIR         = os.environ['MAYTECH_OAG_LANDING_DIR']
-DOWNLOAD_DIR            = '/ADT/data/oag'
-STAGING_DIR             = '/ADT/stage/oag'
-QUARANTINE_DIR          = '/ADT/quarantine/oag'
-SCRIPT_DIR              = '/ADT/scripts'
-BUCKET_NAME             = os.environ['S3_BUCKET_NAME']
-BUCKET_KEY_PREFIX       = os.environ['S3_KEY_PREFIX']
-S3_ACCESS_KEY_ID        = os.environ['S3_ACCESS_KEY_ID']
-S3_SECRET_ACCESS_KEY    = os.environ['S3_SECRET_ACCESS_KEY']
-S3_REGION_NAME          = os.environ['S3_REGION_NAME']
-BASE_URL                = os.environ['CLAMAV_URL']
-BASE_PORT               = os.environ['CLAMAV_PORT']
-RDS_HOST                = os.environ['OAG_RDS_HOST']
-RDS_DATABASE            = os.environ['OAG_RDS_DATABASE']
-RDS_USERNAME            = os.environ['OAG_RDS_USERNAME']
-RDS_PASSWORD            = os.environ['OAG_RDS_PASSWORD']
-RDS_TABLE               = os.environ['OAG_RDS_TABLE']
+SSH_REMOTE_HOST_MAYTECH        = os.environ['MAYTECH_HOST']
+SSH_REMOTE_USER_MAYTECH        = os.environ['MAYTECH_USER']
+SSH_PRIVATE_KEY                = os.environ['MAYTECH_OAG_PRIVATE_KEY_PATH']
+SSH_LANDING_DIR                = os.environ['MAYTECH_OAG_LANDING_DIR']
+DOWNLOAD_DIR                   = '/ADT/data/oag'
+STAGING_DIR                    = '/ADT/stage/oag'
+QUARANTINE_DIR                 = '/ADT/quarantine/oag'
+SCRIPT_DIR                     = '/ADT/scripts'
+BUCKET_NAME                    = os.environ['S3_BUCKET_NAME']
+BUCKET_KEY_PREFIX              = os.environ['S3_KEY_PREFIX']
+S3_ACCESS_KEY_ID               = os.environ['S3_ACCESS_KEY_ID']
+S3_SECRET_ACCESS_KEY           = os.environ['S3_SECRET_ACCESS_KEY']
+S3_REGION_NAME                 = os.environ['S3_REGION_NAME']
+SECONDARY_BUCKET_NAME          = os.environ['SECONDARY_BUCKET_NAME']
+SECONDARY_S3_ACCESS_KEY_ID     = os.environ['SECONDARY_S3_ACCESS_KEY_ID']
+SECONDARY_S3_SECRET_ACCESS_KEY = os.environ['SECONDARY_S3_SECRET_ACCESS_KEY']
+BASE_URL                       = os.environ['CLAMAV_URL']
+BASE_PORT                      = os.environ['CLAMAV_PORT']
+RDS_HOST                       = os.environ['OAG_RDS_HOST']
+RDS_DATABASE                   = os.environ['OAG_RDS_DATABASE']
+RDS_USERNAME                   = os.environ['OAG_RDS_USERNAME']
+RDS_PASSWORD                   = os.environ['OAG_RDS_PASSWORD']
+RDS_TABLE                      = os.environ['OAG_RDS_TABLE']
+LOG_FILE                       = '/ADT/log/sftp_oag.log'
 
 # Setup RDS connection
 
-CONN = psycopg2.connect(host=RDS_HOST, dbname=RDS_DATABASE, user=RDS_USERNAME, password=RDS_PASSWORD)
+CONN = psycopg2.connect(host=RDS_HOST,
+                        dbname=RDS_DATABASE,
+                        user=RDS_USERNAME,
+                        password=RDS_PASSWORD)
 CUR = CONN.cursor()
 
 def ssh_login(in_host, in_user, in_keyfile):
@@ -51,7 +59,7 @@ def ssh_login(in_host, in_user, in_keyfile):
     """
     logger = logging.getLogger()
     ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy()) ## This line can be removed when the host is added to the known_hosts file
+    ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
     privkey = paramiko.RSAKey.from_private_key_file(in_keyfile)
     try:
         ssh.connect(in_host, username=in_user, pkey=privkey)
@@ -70,7 +78,8 @@ def run_virus_scan(filename):
     for scan_file in file_list:
         processing = os.path.join(STAGING_DIR, scan_file)
         with open(processing, 'rb') as scan:
-            response = requests.post('http://' + BASE_URL + ':' + BASE_PORT + '/scan', files={'file': scan}, data={'name': scan_file})
+            response = requests.post('http://' + BASE_URL + ':' + BASE_PORT + '/scan',
+                                     files={'file': scan}, data={'name': scan_file})
             if not 'Everything ok : true' in response.text:
                 logger.error('Virus scan FAIL: %s is dangerous!', scan_file)
                 file_quarantine = os.path.join(QUARANTINE_DIR, scan_file)
@@ -115,12 +124,11 @@ def main():
     form = logging.Formatter(logformat)
     logging.basicConfig(
         format=logformat,
-        datefmt='%Y-%m-%d %H:%M:%S',
         level=logging.INFO
     )
     logger = logging.getLogger()
     if logger.hasHandlers():
-        logger.handlers.clear()
+           logger.handlers.clear()
     loghandler = TimedRotatingFileHandler(LOG_FILE, when="midnight", interval=1, backupCount=7)
     loghandler.suffix = "%Y-%m-%d"
     loghandler.setFormatter(form)
@@ -140,6 +148,7 @@ def main():
 
     downloadcount = 0
     uploadcount = 0
+    secondary_uploadcount = 0
     logger.info("Connecting via SSH")
     ssh = ssh_login(SSH_REMOTE_HOST_MAYTECH, SSH_REMOTE_USER_MAYTECH, SSH_PRIVATE_KEY)
     logger.info("Connected")
@@ -149,7 +158,7 @@ def main():
         sftp.chdir(SSH_LANDING_DIR)
         files = sftp.listdir()
         for file_xml in files:
-            match = re.search('^1124_(SH)?(\d\d\d\d)_(\d\d)_(\d\d)_(\d\d)_(\d\d)_(\d\d)(.*?)\.xml$', file_xml, re.I)
+            match = re.search(r'^1124_(SH)?(\d\d\d\d)_(\d\d)_(\d\d)_(\d\d)_(\d\d)_(\d\d)(.*?)\.xml$', file_xml, re.IGNORECASE)
             download = False
             if match is not None:
                 try:
@@ -158,7 +167,6 @@ def main():
                     logger.exception("Error running SQL query")
                 if result == 0:
                     download = True
-                    logger.info("File %s downloaded", file_xml)
                     rds_insert(RDS_TABLE, file_xml)
                     logger.info("File %s added to RDS", file_xml)
                 else:
@@ -175,7 +183,7 @@ def main():
                     sftp.remove(file_xml)
                     logger.info("Purge %s", file_xml)
             if download:
-                logger.info("Downloading %s to %s", file_xml, file_xml_staging)
+                logger.info("Downloaded %s to %s", file_xml, file_xml_staging)
                 sftp.get(file_xml, file_xml_staging) # remote, local
                 if os.path.isfile(file_xml_staging) and os.path.getsize(file_xml_staging) > 0 and os.path.getsize(file_xml_staging) == sftp.stat(file_xml).st_size:
                     logger.info("Purge %s", file_xml)
@@ -215,21 +223,49 @@ def main():
         aws_secret_access_key=S3_SECRET_ACCESS_KEY,
         region_name=S3_REGION_NAME
     )
+    boto_secondary_s3_session = boto3.Session(
+        aws_access_key_id=SECONDARY_S3_ACCESS_KEY_ID,
+        aws_secret_access_key=SECONDARY_S3_SECRET_ACCESS_KEY,
+        region_name=S3_REGION_NAME
+    )
     if processed_oag_file_list:
         for filename in processed_oag_file_list:
             s3_conn = boto_s3_session.client("s3")
             full_filepath = os.path.join(DOWNLOAD_DIR, filename)
-            logger.info("Copying %s to S3", filename)
             if os.path.isfile(full_filepath):
+                logger.info("Copying %s to S3", filename)
                 s3_conn.upload_file(full_filepath, BUCKET_NAME, BUCKET_KEY_PREFIX + "/" + filename)
-                os.remove(full_filepath)
-                logger.info("Deleting local file: %s", filename)
-                uploadcount += 1
             else:
-                logger.error("Failed to upload %s", filename)
-
-    logger.info("Uploaded %s files", uploadcount)
-
+                logger.error("Failed to upload %s, exiting...", filename)
+                break
+        uploadcount += 1
+        logger.info("Uploaded %s files to %s", uploadcount, BUCKET_NAME)
+# Moving files to Secondary S3 bucket
+        for filename in processed_oag_file_list:
+            match = re.search(r'^1124_(SH)?(\d\d\d\d)_(\d\d)_(\d\d)_(\d\d)_(\d\d)_(\d\d)(.*?)\.xml$', filename, re.IGNORECASE)
+            if match is not None:
+                try:
+                    time = datetime.datetime.now()
+                    secondary_bucket_key_prefix = time.strftime("%Y-%m-%d/%H:%M:%S.%f")
+                    secondary_full_filepath = os.path.join(DOWNLOAD_DIR, filename)
+                    secondary_s3_conn = boto_secondary_s3_session.client("s3")
+                    logger.info("Copying %s to S3 secondary bucket", filename)
+                    secondary_s3_conn.upload_file(secondary_full_filepath,
+                                                  SECONDARY_BUCKET_NAME,
+                                                  secondary_bucket_key_prefix + "/" + filename)
+                except Exception:
+                    logger.exception("Failed to upload %s, exiting...", filename)
+                    break
+        secondary_uploadcount += 1
+        logger.info("Uploaded %s files to %s secondary", secondary_uploadcount, SECONDARY_BUCKET_NAME)
+# Cleaning up
+    for filename in processed_oag_file_list:
+        try:
+            full_filepath = os.path.join(DOWNLOAD_DIR, filename)
+            os.remove(full_filepath)
+            logger.info("Cleaning up local file %s", filename)
+        except Exception:
+            logger. exception("Failed to delete file %s", filename)
 # end def main
 
 if __name__ == '__main__':
