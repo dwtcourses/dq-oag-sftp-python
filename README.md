@@ -5,7 +5,7 @@ Tasks include:
 - SFTP LIST and check against a table in RDS PostgreSQL, add if required
 - SFTP GET from a remote SFTP server
 - Running virus check on each file pulled from SFTP by sending them to ClamAV API
-- AWS S3 PUT files to an S3 bucket
+- AWS S3 PUT files to S3 buckets
 
 ## Dependencies
 
@@ -95,9 +95,12 @@ The script will require the following variables passed in at runtime.
 | privkey | /local/path/id_rsa | True | Private SSH used to connect to the SFTP server|
 | mountpoint|  /local/path/mountpoint-dir | True | SFTP source directory|
 | bucketname | s3-bucket-name | True | S3 bucket name |
+| secondarybucketname | s3-bucket-name | True | S3 bucket name |
 | keyprefix | prefix | True | S3 folder name |
 | awskeyid | ABCD | True | AWS access key ID |
+| secondaryawskeyid | ABCD | True | AWS access key ID |
 | awssecret | abcdb1234 | True | AWS Secret access key |
+| secondaryawssecret | abcdb1234 | True | AWS Secret access key |
 
 - Components:
   - SFTP container
@@ -107,7 +110,7 @@ The script will require the following variables passed in at runtime.
   - PostgreSQL sidekick container
   - OAG Python container
 
-After the script has completed - for the first time it will take around 5 minutes to download all images - there should be a couple of test files in the S3 bucket:
+After the script has completed - for the first time it will take around 5 minutes to download all images - there should be a couple of test files in the Primary S3 bucket and a single *xml* file in the Secondary S3 bucket:
 
 ```
 1124_YYYY_MM_DD_HH_MM_SS.xml
