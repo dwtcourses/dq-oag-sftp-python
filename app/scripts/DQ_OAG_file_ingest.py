@@ -128,7 +128,7 @@ def main():
     )
     logger = logging.getLogger()
     if logger.hasHandlers():
-           logger.handlers.clear()
+        logger.handlers.clear()
     loghandler = TimedRotatingFileHandler(LOG_FILE, when="midnight", interval=1, backupCount=7)
     loghandler.suffix = "%Y-%m-%d"
     loghandler.setFormatter(form)
@@ -213,10 +213,9 @@ def main():
             else:
                 logger.error("Could not run virus scan on %s", obj)
                 break
-    logger.info("Downloaded %s files", downloadcount)
+        logger.info("Downloaded %s files", downloadcount)
 
 # Move files to S3
-    logger.info("Starting to move files to S3")
     processed_oag_file_list = [filename for filename in os.listdir(DOWNLOAD_DIR)]
     boto_s3_session = boto3.Session(
         aws_access_key_id=S3_ACCESS_KEY_ID,
