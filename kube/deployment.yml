@@ -84,6 +84,21 @@ spec:
               secretKeyRef:
                 name: dq-oag-data-ingest
                 key: S3_SECRET_ACCESS_KEY
+          - name: SECONDARY_BUCKET_NAME
+            valueFrom:
+              secretKeyRef:
+                name: dq-oag-data-ingest
+                key: SECONDARY_BUCKET_NAME
+          - name: SECONDARY_S3_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: dq-oag-data-ingest
+                key: SECONDARY_S3_ACCESS_KEY_ID
+          - name: SECONDARY_S3_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: dq-oag-data-ingest
+                key: SECONDARY_S3_SECRET_ACCESS_KEY
           - name: OAG_RDS_HOST
             valueFrom:
               secretKeyRef:
