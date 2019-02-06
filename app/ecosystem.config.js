@@ -19,7 +19,7 @@ module.exports = {
         S3_KEY_PREFIX : process.argv[10],
         S3_ACCESS_KEY_ID : process.argv[11],
         S3_SECRET_ACCESS_KEY : process.argv[12],
-        SECONDARY_BUCKET_NAME : process.argv[13],
+        SECONDARY_S3_BUCKET_NAME : process.argv[13],
         SECONDARY_S3_ACCESS_KEY_ID : process.argv[14],
         SECONDARY_S3_SECRET_ACCESS_KEY : process.argv[15],
         S3_REGION_NAME : "eu-west-2",

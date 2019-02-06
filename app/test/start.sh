@@ -134,7 +134,7 @@ function oag {
         -e S3_KEY_PREFIX=$keyprefix \
         -e S3_ACCESS_KEY_ID=$awskeyid \
         -e S3_SECRET_ACCESS_KEY=$awssecret \
-        -e SECONDARY_BUCKET_NAME=$secondarybucketname \
+        -e SECONDARY_S3_BUCKET_NAME=$secondarybucketname \
         -e SECONDARY_S3_ACCESS_KEY_ID=$secondaryawskeyid \
         -e SECONDARY_S3_SECRET_ACCESS_KEY=$secondaryawssecret \
         -e CLAMAV_URL='clamav-api' \
