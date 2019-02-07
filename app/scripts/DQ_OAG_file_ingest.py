@@ -10,6 +10,7 @@
 """
 import re
 import os
+import sys
 import datetime
 import logging
 from logging.handlers import TimedRotatingFileHandler
@@ -28,6 +29,7 @@ DOWNLOAD_DIR                   = '/ADT/data/oag'
 STAGING_DIR                    = '/ADT/stage/oag'
 QUARANTINE_DIR                 = '/ADT/quarantine/oag'
 SCRIPT_DIR                     = '/ADT/scripts'
+LOG_FILE                       = '/ADT/log/DQ_SFTP_OAG.log'
 BUCKET_NAME                    = os.environ['S3_BUCKET_NAME']
 BUCKET_KEY_PREFIX              = os.environ['S3_KEY_PREFIX']
 S3_ACCESS_KEY_ID               = os.environ['S3_ACCESS_KEY_ID']
@@ -43,7 +45,6 @@ RDS_DATABASE                   = os.environ['OAG_RDS_DATABASE']
 RDS_USERNAME                   = os.environ['OAG_RDS_USERNAME']
 RDS_PASSWORD                   = os.environ['OAG_RDS_PASSWORD']
 RDS_TABLE                      = os.environ['OAG_RDS_TABLE']
-LOG_FILE                       = '/ADT/log/sftp_oag.log'
 
 # Setup RDS connection
 
@@ -65,6 +66,7 @@ def ssh_login(in_host, in_user, in_keyfile):
         ssh.connect(in_host, username=in_user, pkey=privkey)
     except Exception:
         logger.exception('SSH CONNECT ERROR')
+        sys.exit(1)
     return ssh
 
 def run_virus_scan(filename):
@@ -100,6 +102,7 @@ def rds_insert(table, filename):
         CONN.commit()
     except Exception:
         logger.exception('INSERT ERROR')
+        sys.exit(1)
 
 def rds_query(table, filename):
     """
@@ -111,6 +114,7 @@ def rds_query(table, filename):
         CONN.commit()
     except Exception:
         logger.exception('QUERY ERROR')
+        sys.exit(1)
     if CUR.fetchone():
         return 1
     else:
@@ -133,6 +137,9 @@ def main():
     loghandler.suffix = "%Y-%m-%d"
     loghandler.setFormatter(form)
     logger.addHandler(loghandler)
+    consolehandler = logging.StreamHandler()
+    consolehandler.setFormatter(form)
+    logger.addHandler(consolehandler)
     logger.info("Starting")
 
     # Main
@@ -165,6 +172,7 @@ def main():
                     result = rds_query(RDS_TABLE, file_xml)
                 except Exception:
                     logger.exception("Error running SQL query")
+                    sys.exit(1)
                 if result == 0:
                     download = True
                     rds_insert(RDS_TABLE, file_xml)
@@ -196,6 +204,7 @@ def main():
         # end for
     except Exception:
         logger.exception("Failure")
+        sys.exit(1)
 # end with
 
 # batch virus scan on STAGING_DIR for OAG
@@ -233,11 +242,13 @@ def main():
             full_filepath = os.path.join(DOWNLOAD_DIR, filename)
             if os.path.isfile(full_filepath):
                 logger.info("Copying %s to S3", filename)
-                s3_conn.upload_file(full_filepath, BUCKET_NAME, BUCKET_KEY_PREFIX + "/" + filename)
+                s3_conn.upload_file(full_filepath, BUCKET_NAME,
+                                    BUCKET_KEY_PREFIX + "/" + filename)
+                uploadcount += 1
             else:
                 logger.error("Failed to upload %s, exiting...", filename)
                 break
-        uploadcount += 1
+
         logger.info("Uploaded %s files to %s", uploadcount, BUCKET_NAME)
 # Moving files to Secondary S3 bucket
         for filename in processed_oag_file_list:
@@ -252,10 +263,10 @@ def main():
                     secondary_s3_conn.upload_file(secondary_full_filepath,
                                                   SECONDARY_S3_BUCKET_NAME,
                                                   secondary_bucket_key_prefix + "/" + filename)
+                    secondary_uploadcount += 1
                 except Exception:
                     logger.exception("Failed to upload %s, exiting...", filename)
-                    break
-        secondary_uploadcount += 1
+                    sys.exit(1)
         logger.info("Uploaded %s files to %s", secondary_uploadcount, SECONDARY_S3_BUCKET_NAME)
 # Cleaning up
     for filename in processed_oag_file_list:
@@ -265,6 +276,7 @@ def main():
             logger.info("Cleaning up local file %s", filename)
         except Exception:
             logger. exception("Failed to delete file %s", filename)
+            sys.exit(1)
 # end def main
 
 if __name__ == '__main__':
