@@ -29,7 +29,8 @@ module.exports = {
         OAG_RDS_DATABASE : process.argv[19],
         OAG_RDS_USERNAME : process.argv[20],
         OAG_RDS_PASSWORD : process.argv[21],
-        OAG_RDS_TABLE : process.argv[22]
+        OAG_RDS_TABLE : process.argv[22],
+        SLACK_WEBHOOK : process.argv[23]
       }
     }
   ]

@@ -48,6 +48,7 @@ pipeline:
       - export OAG_RDS_USERNAME=$$NOTPROD_OAG_RDS_USERNAME
       - export OAG_RDS_PASSWORD=$$NOTPROD_OAG_RDS_PASSWORD
       - export OAG_RDS_TABLE=$$NOTPROD_OAG_RDS_TABLE
+      - export SLACK_WEBHOOK=$$NOTPROD_SLACK_WEBHOOK
       - kd -f kube/pvc.yml -f kube/secret.yml -f kube/deployment.yml
     secrets:
       - NOTPROD_KUBE_TOKEN
@@ -69,6 +70,7 @@ pipeline:
       - NOTPROD_OAG_RDS_USERNAME
       - NOTPROD_OAG_RDS_PASSWORD
       - NOTPROD_OAG_RDS_TABLE
+      - NOTPROD_SLACK_WEBHOOK
     when:
       event: push
 
@@ -106,6 +108,7 @@ pipeline:
       - export OAG_RDS_USERNAME=$$PROD_OAG_RDS_USERNAME
       - export OAG_RDS_PASSWORD=$$PROD_OAG_RDS_PASSWORD
       - export OAG_RDS_TABLE=$$PROD_OAG_RDS_TABLE
+      - export SLACK_WEBHOOK=$$PROD_SLACK_WEBHOOK
       - kd -f kube/pvc.yml -f kube/secret.yml -f kube/deployment.yml
     secrets:
       - PROD_KUBE_TOKEN
@@ -127,6 +130,7 @@ pipeline:
       - PROD_OAG_RDS_USERNAME
       - PROD_OAG_RDS_PASSWORD
       - PROD_OAG_RDS_TABLE
+      - PROD_SLACK_WEBHOOK
     when:
       environment: production
       branch: master

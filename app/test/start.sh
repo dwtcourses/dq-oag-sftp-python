@@ -38,6 +38,8 @@ echo "Enter awssecret and press [ENTER]: "
 read awssecret
 echo "Enter secondaryawssecret and press [ENTER]: "
 read secondaryawssecret
+echo "Enter webhook and press [ENTER]: "
+read webhook
 
 # Create random password
 echo "********************************************"
@@ -144,6 +146,7 @@ function oag {
         -e OAG_RDS_USERNAME=$username \
         -e OAG_RDS_PASSWORD=$randompass \
         -e OAG_RDS_TABLE=$table \
+        -e SLACK_WEBHOOK=$webhook \
         -v $privkey:/home/runner/.ssh/id_rsa:ro \
         --link clamav-api:clamav-api \
         --link sftp-server:sftp-server \

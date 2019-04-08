@@ -10,7 +10,7 @@ Tasks include:
 ## Dependencies
 
 - Docker
-- Python2.7
+- Python3.7
 - Drone
 - AWS CLI
 - AWS Keys with PUT access to S3
@@ -32,7 +32,7 @@ Tasks include:
     - *settings.py*: declare variables passed to the *DQ_OAG_file_ingest.py* file at runtime
   - **test/**
     - *Dockerfile*: PostgreSQL sidekick container config
-    - *test.py*: Test Python2.7 script
+    - *test.py*: Test Python3.7 script
     - *start.sh*: Download, build and run Docker containers
     - *stop.sh*: Stop and remove **all** Docker containers
     - *eicar.com*: File containing a test virus string
@@ -50,7 +50,7 @@ The POD consists of 3 (three) Docker containers responsible for handling data.
 
 | Container Name | Function | Language | Exposed port | Managed by |
 | :--- | :---: | :---: | ---: | --- |
-| dq-oag-data-ingest | Data pipeline app| Python2.7 | N/A | DQ Devops |
+| dq-oag-data-ingest | Data pipeline app| Python3.7 | N/A | DQ Devops |
 | clamav-api | API for virus checks | N/A | 8080 |ACP |
 | clamav | Database for virus checks | N/A | 3310 |ACP |
 
@@ -101,6 +101,7 @@ The script will require the following variables passed in at runtime.
 | secondaryawskeyid | ABCD | True | AWS access key ID |
 | awssecret | abcdb1234 | True | AWS Secret access key |
 | secondaryawssecret | abcdb1234 | True | AWS Secret access key |
+| webhook | https://hooks.slack.com/services/ABCDE12345 | True | Slack Webhook URL |
 
 - Components:
   - SFTP container

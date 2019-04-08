@@ -124,6 +124,11 @@ spec:
               secretKeyRef:
                 name: dq-oag-data-ingest
                 key: OAG_RDS_TABLE
+          - name: SLACK_WEBHOOK
+            valueFrom:
+              secretKeyRef:
+                name: dq-oag-data-ingest
+                key: SLACK_WEBHOOK
           - name: CLAMAV_URL
             value: "127.0.0.1"
           - name: CLAMAV_PORT

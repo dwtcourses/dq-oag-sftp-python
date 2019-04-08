@@ -14,6 +14,8 @@ import sys
 import datetime
 import logging
 from logging.handlers import TimedRotatingFileHandler
+import json
+import urllib.request
 import paramiko
 import boto3
 import requests
@@ -45,6 +47,7 @@ RDS_DATABASE                   = os.environ['OAG_RDS_DATABASE']
 RDS_USERNAME                   = os.environ['OAG_RDS_USERNAME']
 RDS_PASSWORD                   = os.environ['OAG_RDS_PASSWORD']
 RDS_TABLE                      = os.environ['OAG_RDS_TABLE']
+SLACK_WEBHOOK                  = os.environ['SLACK_WEBHOOK']
 
 # Setup RDS connection
 
@@ -64,8 +67,11 @@ def ssh_login(in_host, in_user, in_keyfile):
     privkey = paramiko.RSAKey.from_private_key_file(in_keyfile)
     try:
         ssh.connect(in_host, username=in_user, pkey=privkey)
-    except Exception:
-        logger.exception('SSH CONNECT ERROR')
+    except Exception as err:
+        logger.error('SSH CONNECT ERROR')
+        logger.exception(str(err))
+        error = str(err)
+        send_message_to_slack(error)
         sys.exit(1)
     return ssh
 
@@ -83,11 +89,13 @@ def run_virus_scan(filename):
             response = requests.post('http://' + BASE_URL + ':' + BASE_PORT + '/scan',
                                      files={'file': scan}, data={'name': scan_file})
             if not 'Everything ok : true' in response.text:
-                logger.error('Virus scan FAIL: %s is dangerous!', scan_file)
+                logger.warning('Virus scan FAIL: %s is dangerous!', scan_file)
+                warning = ("Virus scan FAIL: " + scan_file + " is dangerous!")
+                send_message_to_slack(str(warning))
                 file_quarantine = os.path.join(QUARANTINE_DIR, scan_file)
                 logger.info('Move %s from staging to quarantine %s', processing, file_quarantine)
                 os.rename(processing, file_quarantine)
-                return False
+                continue
             else:
                 logger.info('Virus scan OK: %s', scan_file)
     return True
@@ -100,8 +108,11 @@ def rds_insert(table, filename):
     try:
         CUR.execute(sql.SQL("INSERT INTO {} values (%s)").format(sql.Identifier(table)), (filename,))
         CONN.commit()
-    except Exception:
-        logger.exception('INSERT ERROR')
+    except Exception as err:
+        logger.error('INSERT ERROR')
+        logger.exception(str(err))
+        error = str(err)
+        send_message_to_slack(error)
         sys.exit(1)
 
 def rds_query(table, filename):
@@ -112,18 +123,64 @@ def rds_query(table, filename):
     try:
         CUR.execute(sql.SQL("SELECT * FROM {} WHERE filename = (%s)").format(sql.Identifier(table)), (filename,))
         CONN.commit()
-    except Exception:
-        logger.exception('QUERY ERROR')
+    except Exception as err:
+        logger.error('QUERY ERROR')
+        logger.exception(str(err))
+        error = str(err)
+        send_message_to_slack(error)
         sys.exit(1)
     if CUR.fetchone():
         return 1
     else:
         return 0
 
+def send_message_to_slack(text):
+    """
+    Formats the text and posts to a specific Slack web app's URL
+    Returns:
+        Slack API repsonse
+    """
+    logger = logging.getLogger()
+    try:
+        post = {
+            "text": ":fire: :sad_parrot: An error has occured in the *OAG* pod :sad_parrot: :fire:",
+            "attachments": [
+                {
+                    "text": "{0}".format(text),
+                    "color": "#B22222",
+                    "attachment_type": "default",
+                    "fields": [
+                        {
+                            "title": "Priority",
+                            "value": "High",
+                            "short": "false"
+                        }
+                    ],
+                    "footer": "Kubernetes API",
+                    "footer_icon": "https://platform.slack-edge.com/img/default_application_icon.png"
+                }
+            ]
+            }
+        json_data = json.dumps(post)
+        req = urllib.request.Request(url=SLACK_WEBHOOK,
+                                     data=json_data.encode('utf-8'),
+                                     headers={'Content-Type': 'application/json'})
+        resp = urllib.request.urlopen(req)
+        return resp
+
+    except Exception as err:
+        logger.error(
+            'The following error has occurred on line: %s',
+            sys.exc_info()[2].tb_lineno)
+        logger.error(str(err))
+        sys.exit(1)
+
+
 def main():
     """
     Main function
     """
+# Setup logging and global variables
     logformat = '%(asctime)s\t%(name)s\t%(levelname)s\t%(message)s'
     form = logging.Formatter(logformat)
     logging.basicConfig(
@@ -151,15 +208,15 @@ def main():
     if not os.path.exists(QUARANTINE_DIR):
         os.makedirs(QUARANTINE_DIR)
 
-    # Note: do not archive the files - the OAG Import script will do the archiving
-
     downloadcount = 0
     uploadcount = 0
     secondary_uploadcount = 0
+
+# Connect and GET files from SFTP
     logger.info("Connecting via SSH")
     ssh = ssh_login(SSH_REMOTE_HOST_MAYTECH, SSH_REMOTE_USER_MAYTECH, SSH_PRIVATE_KEY)
-    logger.info("Connected")
     sftp = ssh.open_sftp()
+    logger.info("Connected")
 
     try:
         sftp.chdir(SSH_LANDING_DIR)
@@ -170,20 +227,24 @@ def main():
             if match is not None:
                 try:
                     result = rds_query(RDS_TABLE, file_xml)
-                except Exception:
-                    logger.exception("Error running SQL query")
+                except Exception as err:
+                    logger.error("Error running SQL query")
+                    logger.exception(str(err))
+                    error = str(err)
+                    send_message_to_slack(error)
                     sys.exit(1)
                 if result == 0:
                     download = True
+                    logger.info("File %s downloaded", file_xml)
                     rds_insert(RDS_TABLE, file_xml)
                     logger.info("File %s added to RDS", file_xml)
                 else:
-                    logger.info("Skipping %s", file_xml)
+                    logger.debug("Skipping %s", file_xml)
                     continue
 
             file_xml_staging = os.path.join(STAGING_DIR, file_xml)
 
-            #protection against redownload
+# Protection against redownload
             if os.path.isfile(file_xml_staging) and os.path.getsize(file_xml_staging) > 0 and os.path.getsize(file_xml_staging) == sftp.stat(file_xml).st_size:
                 download = False
                 purge = rds_query(RDS_TABLE, file_xml)
@@ -201,13 +262,16 @@ def main():
                     continue
         sftp.close()
         ssh.close()
-        # end for
-    except Exception:
-        logger.exception("Failure")
-        sys.exit(1)
-# end with
 
-# batch virus scan on STAGING_DIR for OAG
+    except Exception as err:
+        logger.error("Failure getting files from SFTP")
+        logger.exception(str(err))
+        error = str(err)
+        send_message_to_slack(error)
+        sys.exit(1)
+
+
+# Run virus scan
     if run_virus_scan(STAGING_DIR):
         for obj in os.listdir(STAGING_DIR):
             scanner = rds_query(RDS_TABLE, obj)
@@ -241,14 +305,18 @@ def main():
             s3_conn = boto_s3_session.client("s3")
             full_filepath = os.path.join(DOWNLOAD_DIR, filename)
             if os.path.isfile(full_filepath):
-                logger.info("Copying %s to S3", filename)
-                s3_conn.upload_file(full_filepath, BUCKET_NAME,
-                                    BUCKET_KEY_PREFIX + "/" + filename)
-                uploadcount += 1
-            else:
-                logger.error("Failed to upload %s, exiting...", filename)
-                break
-
+                try:
+                    logger.info("Copying %s to S3", filename)
+                    s3_conn.upload_file(full_filepath, BUCKET_NAME,
+                                        BUCKET_KEY_PREFIX + "/" + filename)
+                    uploadcount += 1
+                except Exception as err:
+                    logger.error(
+                        "Failed to upload %s, exiting...", filename)
+                    logger.exception(str(err))
+                    error = str(err)
+                    send_message_to_slack(error)
+                    sys.exit(1)
         logger.info("Uploaded %s files to %s", uploadcount, BUCKET_NAME)
 # Moving files to Secondary S3 bucket
         for filename in processed_oag_file_list:
@@ -264,8 +332,12 @@ def main():
                                                   SECONDARY_S3_BUCKET_NAME,
                                                   secondary_bucket_key_prefix + "/" + filename)
                     secondary_uploadcount += 1
-                except Exception:
-                    logger.exception("Failed to upload %s, exiting...", filename)
+                except Exception as err:
+                    logger.error(
+                        "Failed to upload %s, exiting...", filename)
+                    logger.exception(str(err))
+                    error = str(err)
+                    send_message_to_slack(error)
                     sys.exit(1)
         logger.info("Uploaded %s files to %s", secondary_uploadcount, SECONDARY_S3_BUCKET_NAME)
 # Cleaning up
@@ -274,10 +346,12 @@ def main():
             full_filepath = os.path.join(DOWNLOAD_DIR, filename)
             os.remove(full_filepath)
             logger.info("Cleaning up local file %s", filename)
-        except Exception:
-            logger. exception("Failed to delete file %s", filename)
+        except Exception as err:
+            logger.error("Failed to delete file %s", filename)
+            logger.exception(str(err))
+            error = str(err)
+            send_message_to_slack(error)
             sys.exit(1)
-# end def main
 
 if __name__ == '__main__':
     main()
