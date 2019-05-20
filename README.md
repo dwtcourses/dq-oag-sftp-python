@@ -95,7 +95,6 @@ The script will require the following variables passed in at runtime.
 | privkey | /local/path/id_rsa | True | Private SSH used to connect to the SFTP server|
 | mountpoint|  /local/path/mountpoint-dir | True | SFTP source directory|
 | bucketname | s3-bucket-name | True | S3 bucket name |
-| keyprefix | prefix | True | S3 folder name |
 | awskeyid | ABCD | True | AWS access key ID |
 | awssecret | abcdb1234 | True | AWS Secret access key |
 | webhook | https://hooks.slack.com/services/ABCDE12345 | True | Slack Webhook URL |

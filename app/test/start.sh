@@ -26,8 +26,6 @@ echo "Setup OAG container variables"
 echo "********************************************"
 echo "Enter bucketname and press [ENTER]: "
 read bucketname
-echo "Enter keyprefix and press [ENTER]: "
-read keyprefix
 echo "Enter awskeyid and press [ENTER]: "
 read awskeyid
 echo "Enter awssecret and press [ENTER]: "
@@ -127,7 +125,6 @@ function oag {
         -e SSH_PRIVATE_KEY='/home/runner/.ssh/id_rsa' \
         -e SSH_LANDING_DIR='test' \
         -e S3_BUCKET_NAME=$bucketname \
-        -e S3_KEY_PREFIX=$keyprefix \
         -e S3_ACCESS_KEY_ID=$awskeyid \
         -e S3_SECRET_ACCESS_KEY=$awssecret \
         -e CLAMAV_URL='clamav-api' \
