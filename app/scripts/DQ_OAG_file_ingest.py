@@ -276,8 +276,6 @@ def main():
                 file_staging = os.path.join(STAGING_DIR, obj)
                 logger.info("Move %s from staging to download %s", file_staging, file_download)
                 os.rename(file_staging, file_download)
-                file_done_download = file_download + '.done'
-                open(file_done_download, 'w').close()
                 downloadcount += 1
             else:
                 logger.error("Could not run virus scan on %s", obj)
@@ -298,7 +296,7 @@ def main():
             if os.path.isfile(full_filepath):
                 try:
                     time = datetime.datetime.now()
-                    secondary_bucket_key_prefix = time.strftime("%Y-%m-%d/%H:%M:%S.%f")
+                    bucket_key_prefix = time.strftime("%Y-%m-%d/%H:%M:%S.%f")
                     logger.info("Copying %s to S3", filename)
                     s3_conn.upload_file(full_filepath, BUCKET_NAME,
                                         bucket_key_prefix + "/" + filename)
