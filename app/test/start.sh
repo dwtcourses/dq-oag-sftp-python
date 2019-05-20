@@ -26,18 +26,12 @@ echo "Setup OAG container variables"
 echo "********************************************"
 echo "Enter bucketname and press [ENTER]: "
 read bucketname
-echo "Enter secondarybucketname and press [ENTER]: "
-read secondarybucketname
 echo "Enter keyprefix and press [ENTER]: "
 read keyprefix
 echo "Enter awskeyid and press [ENTER]: "
 read awskeyid
-echo "Enter secondaryawskeyid and press [ENTER]: "
-read secondaryawskeyid
 echo "Enter awssecret and press [ENTER]: "
 read awssecret
-echo "Enter secondaryawssecret and press [ENTER]: "
-read secondaryawssecret
 echo "Enter webhook and press [ENTER]: "
 read webhook
 
@@ -136,9 +130,6 @@ function oag {
         -e S3_KEY_PREFIX=$keyprefix \
         -e S3_ACCESS_KEY_ID=$awskeyid \
         -e S3_SECRET_ACCESS_KEY=$awssecret \
-        -e SECONDARY_S3_BUCKET_NAME=$secondarybucketname \
-        -e SECONDARY_S3_ACCESS_KEY_ID=$secondaryawskeyid \
-        -e SECONDARY_S3_SECRET_ACCESS_KEY=$secondaryawssecret \
         -e CLAMAV_URL='clamav-api' \
         -e CLAMAV_PORT='8080' \
         -e OAG_RDS_HOST='postgresql' \

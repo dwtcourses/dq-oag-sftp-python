@@ -37,9 +37,6 @@ BUCKET_KEY_PREFIX              = os.environ['S3_KEY_PREFIX']
 S3_ACCESS_KEY_ID               = os.environ['S3_ACCESS_KEY_ID']
 S3_SECRET_ACCESS_KEY           = os.environ['S3_SECRET_ACCESS_KEY']
 S3_REGION_NAME                 = os.environ['S3_REGION_NAME']
-SECONDARY_S3_BUCKET_NAME       = os.environ['SECONDARY_S3_BUCKET_NAME']
-SECONDARY_S3_ACCESS_KEY_ID     = os.environ['SECONDARY_S3_ACCESS_KEY_ID']
-SECONDARY_S3_SECRET_ACCESS_KEY = os.environ['SECONDARY_S3_SECRET_ACCESS_KEY']
 BASE_URL                       = os.environ['CLAMAV_URL']
 BASE_PORT                      = os.environ['CLAMAV_PORT']
 RDS_HOST                       = os.environ['OAG_RDS_HOST']
@@ -210,7 +207,7 @@ def main():
 
     downloadcount = 0
     uploadcount = 0
-    secondary_uploadcount = 0
+    
 
 # Connect and GET files from SFTP
     logger.info("Connecting via SSH")
@@ -295,11 +292,6 @@ def main():
         aws_secret_access_key=S3_SECRET_ACCESS_KEY,
         region_name=S3_REGION_NAME
     )
-    boto_secondary_s3_session = boto3.Session(
-        aws_access_key_id=SECONDARY_S3_ACCESS_KEY_ID,
-        aws_secret_access_key=SECONDARY_S3_SECRET_ACCESS_KEY,
-        region_name=S3_REGION_NAME
-    )
     if processed_oag_file_list:
         for filename in processed_oag_file_list:
             s3_conn = boto_s3_session.client("s3")
@@ -318,28 +310,7 @@ def main():
                     send_message_to_slack(error)
                     sys.exit(1)
         logger.info("Uploaded %s files to %s", uploadcount, BUCKET_NAME)
-# Moving files to Secondary S3 bucket
-        for filename in processed_oag_file_list:
-            match = re.search(r'^1124_(SH)?(\d\d\d\d)_(\d\d)_(\d\d)_(\d\d)_(\d\d)_(\d\d)(.*?)\.xml$', filename, re.IGNORECASE)
-            if match is not None:
-                try:
-                    time = datetime.datetime.now()
-                    secondary_bucket_key_prefix = time.strftime("%Y-%m-%d/%H:%M:%S.%f")
-                    secondary_full_filepath = os.path.join(DOWNLOAD_DIR, filename)
-                    secondary_s3_conn = boto_secondary_s3_session.client("s3")
-                    logger.info("Copying %s to S3 %s bucket", filename, SECONDARY_S3_BUCKET_NAME)
-                    secondary_s3_conn.upload_file(secondary_full_filepath,
-                                                  SECONDARY_S3_BUCKET_NAME,
-                                                  secondary_bucket_key_prefix + "/" + filename)
-                    secondary_uploadcount += 1
-                except Exception as err:
-                    logger.error(
-                        "Failed to upload %s, exiting...", filename)
-                    logger.exception(str(err))
-                    error = str(err)
-                    send_message_to_slack(error)
-                    sys.exit(1)
-        logger.info("Uploaded %s files to %s", secondary_uploadcount, SECONDARY_S3_BUCKET_NAME)
+
 # Cleaning up
     for filename in processed_oag_file_list:
         try:
