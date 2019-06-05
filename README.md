@@ -5,6 +5,7 @@ Tasks include:
 - SFTP LIST and check against a table in RDS PostgreSQL, add if required
 - SFTP GET from a remote SFTP server
 - Running virus check on each file pulled from SFTP by sending them to ClamAV API
+- Parse and validate XML files
 - AWS S3 PUT files to S3 buckets
 
 ## Dependencies
@@ -76,6 +77,7 @@ The *dq-oag-data-ingest* container connects to the PostgreSQL backend at each ru
 - *OK* or *!OK* response text is sent back to *dq-oag-data-ingest*
   - *IF OK* file is uploaded to S3 and deleted from local storage
   - *IF !OK* file is moved to quarantine on the PVC
+- Parse XML files and move failed ones to */ADT/failed_to_parse/oag*  
 
 ## Drone secrets
 
@@ -111,12 +113,17 @@ After the script has completed - for the first time it will take around 5 minute
 
 ```
 1124_YYYY_MM_DD_HH_MM_SS.xml
-1124_YYYY_MM_DD_HH_MM_SS.xml.done
 ```
-The other test file contains a test virus string and it will be located under:
+Another test file contains a test virus string and it will be located under:
 
 ```
 /ADT/quarantine/oag/1124_YYYY_MM_DD_HH_MM_SS.xml
+```
+
+Also there will be a failed XML test file and it will be located under:
+
+```
+/ADT/failed_to_parse/oag//1124_YYYY_MM_DD_HH_MM_SS.xml
 ```
 
 - Launching the test suite

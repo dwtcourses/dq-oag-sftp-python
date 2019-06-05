@@ -256,8 +256,8 @@ def main():
         for file_xml in files:
             match = re.search(r'^1124_(SH)?(\d\d\d\d)_(\d\d)_(\d\d)_(\d\d)_(\d\d)_(\d\d)(.*?)\.xml$', file_xml, re.IGNORECASE)
             download = False
-            # if match is None:
-            #     send_message_to_slack("Pulling zero files! Contact the vendor")
+            if match is None:
+                send_message_to_slack("Pulling zero files! Contact the vendor")
             if match is not None:
                 try:
                     result = rds_query(RDS_TABLE, file_xml)

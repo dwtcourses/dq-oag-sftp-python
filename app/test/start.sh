@@ -33,19 +33,6 @@ read awssecret
 echo "Enter webhook and press [ENTER]: "
 read webhook
 
-# Create random password
-echo "********************************************"
-randompass=$(openssl rand -hex 24)
-echo "Random password generated: $randompass"
-
-# Create random user
-echo "********************************************"
-username=$(openssl rand -hex 6)
-echo "Random username generated: $username"
-
-database='foo'
-table='bar'
-
 # Build SFTP container
 
 function sftp_server {
@@ -88,9 +75,9 @@ function clamav_api {
 function postgresql {
   run=$(docker run --rm \
         --name postgresql \
-        -e POSTGRES_PASSWORD=$randompass \
-        -e POSTGRES_USER=$username \
-        -e POSTGRES_DB=$database \
+        -e POSTGRES_PASSWORD='foobar' \
+        -e POSTGRES_USER='root' \
+        -e POSTGRES_DB='foo' \
         -d postgres
        )
        echo "Created container with SHA: $run"
@@ -100,12 +87,7 @@ function postgresql {
 
 function postgresql_sidekick {
   run=$(docker build \
-       -t psql/bash --rm \
-       --build-arg OAG_RDS_HOST='postgresql' \
-       --build-arg OAG_RDS_DATABASE=$database \
-       --build-arg OAG_RDS_USERNAME=$username \
-       --build-arg OAG_RDS_PASSWORD=$randompass \
-       --build-arg OAG_RDS_TABLE=$table . && \
+       -t psql/bash --rm . && \
        docker run --rm \
        --name psql \
        --link postgresql:postgresql \
@@ -118,7 +100,7 @@ function postgresql_sidekick {
 
 function oag {
   run=$(docker build -t python/oag --rm ../. && \
-        docker run --rm \
+        docker run \
         --name oag \
         -e SSH_REMOTE_HOST_MAYTECH='sftp-server' \
         -e SSH_REMOTE_USER_MAYTECH='test' \
@@ -130,10 +112,10 @@ function oag {
         -e CLAMAV_URL='clamav-api' \
         -e CLAMAV_PORT='8080' \
         -e OAG_RDS_HOST='postgresql' \
-        -e OAG_RDS_DATABASE=$database \
-        -e OAG_RDS_USERNAME=$username \
-        -e OAG_RDS_PASSWORD=$randompass \
-        -e OAG_RDS_TABLE=$table \
+        -e OAG_RDS_DATABASE='foo' \
+        -e OAG_RDS_USERNAME='root' \
+        -e OAG_RDS_PASSWORD='foobar' \
+        -e OAG_RDS_TABLE='bar' \
         -e SLACK_WEBHOOK=$webhook \
         -v $privkey:/home/runner/.ssh/id_rsa:ro \
         --link clamav-api:clamav-api \
@@ -146,14 +128,26 @@ function oag {
 
 function create_ok_file {
   DATE=`date +%Y_%m_%d_%H_%M_%S`
-  run=$(echo "Test data in file." > $mountpoint/1124_$DATE.xml && sleep 5) # wait for OAG container start PM2 and process file
+  run=$(
+    {
+        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+        echo "<foo>"
+        echo "<foobar>foobar</foobar>"
+        echo "</foo>"
+    } > $mountpoint/1124_$DATE.xml && sleep 5) # wait for OAG container start PM2 and process file
   echo "Created OK test file: 1124_$DATE.xml"
+}
+
+function create_fail_file {
+  DATE=`date +%Y_%m_%d_%H_%M_%S`
+  run=$(echo "This is not an XML file" > $mountpoint/1124_$DATE.xml && sleep 5) # wait for OAG container start PM2 and process file
+  echo "Created FAIL test file: 1124_$DATE.xml"
 }
 
 function create_virus_file {
   DATE=`date +%Y_%m_%d_%H_%M_%S`
   run=$(cat ./eicar.com > $mountpoint/1124_$DATE.xml)
-  echo "Created FAIL test file: 1124_$DATE.xml"
+  echo "Created VIRUS test file: 1124_$DATE.xml"
 }
 
 function main {
@@ -187,7 +181,11 @@ function main {
   create_ok_file
   echo "Done."
   echo "********************************************"
-  echo "Creating Virus test file. Waiting..."
+  echo "Creating FAIL test file and wait 5 seconds so that OAG container can process it. Waiting..."
+  create_fail_file
+  echo "Done."
+  echo "********************************************"
+  echo "Creating VIRUS test file. Waiting..."
   create_virus_file
   echo "Done."
   echo "********************************************"

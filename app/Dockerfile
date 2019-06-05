@@ -9,6 +9,7 @@ RUN mkdir -p \
              /tmp/ADT/data/oag \
              /tmp/ADT/stage/oag \
              /tmp/ADT/quarantine/oag \
+             /tmp/ADT/failed_to_parse/oag \
              /tmp/ADT/log \
              /tmp/ADT/bin \
              /ADT \
@@ -32,7 +33,7 @@ RUN groupadd -r runner && \
 
 # Install script dependencies
 RUN yum update -y
-RUN yum install -y wget make gcc openssl-devel zlib-devel pcre-devel bzip2-devel libffi-devel epel-release
+RUN yum install -y wget make gcc openssl-devel zlib-devel pcre-devel bzip2-devel libffi-devel epel-release vi
 
 # Install Python3.7.2 and pip modules
 RUN cd /usr/bin && \
