@@ -322,10 +322,6 @@ def main():
         send_message_to_slack(error)
         sys.exit(1)
 
-# Closing SFTP connection
-    sftp.close()
-    ssh.close()
-
 # Move files to S3
     processed_oag_file_list = [filename for filename in os.listdir(DOWNLOAD_DIR)]
     boto_s3_session = boto3.Session(
@@ -366,6 +362,10 @@ def main():
             error = str(err)
             send_message_to_slack(error)
             sys.exit(1)
+
+# Closing SFTP connection
+    sftp.close()
+    ssh.close()
 
 if __name__ == "__main__":
     main()
