@@ -88,6 +88,7 @@ function postgresql {
 function postgresql_sidekick {
   run=$(docker build \
        -t psql/bash --rm . && \
+       sleep 15 && \
        docker run --rm \
        --name psql \
        --link postgresql:postgresql \
@@ -100,7 +101,7 @@ function postgresql_sidekick {
 
 function oag {
   run=$(docker build -t python/oag --rm ../. && \
-        docker run \
+        docker run --rm \
         --name oag \
         -e SSH_REMOTE_HOST_MAYTECH='sftp-server' \
         -e SSH_REMOTE_USER_MAYTECH='test' \
