@@ -129,7 +129,6 @@ def rds_query(table, filename):
 def parse_xml(xml_file):
     """
     Parse XML files
-    Move failed to parse files
     """
     logger = logging.getLogger()
     try:
@@ -232,6 +231,7 @@ def main():
     # Main
     os.chdir(SCRIPT_DIR)
 
+    downloadcount = 0
     uploadcount = 0
 
 
@@ -248,8 +248,6 @@ def main():
         for file_xml in files:
             match = re.search(r"^1124_(SH)?(\d\d\d\d)_(\d\d)_(\d\d)_(\d\d)_(\d\d)_(\d\d)(.*?)\.xml$", file_xml, re.IGNORECASE)
             download = False
-            # if match is None:
-            #     send_message_to_slack("Pulling zero files! Contact the vendor")
             if match is not None:
                 try:
                     result = rds_query(RDS_TABLE, file_xml)
@@ -261,6 +259,7 @@ def main():
                     sys.exit(1)
                 if result == 0:
                     download = True
+                    downloadcount += 1
                 else:
                     logger.debug("Skipping %s", file_xml)
                     continue
@@ -270,7 +269,7 @@ def main():
             file_failed_parse = find_parsed_failed_xml(FAILED_PARSE_DIR, file_xml)
             file_failed_parse_dir = os.path.join(FAILED_PARSE_DIR, file_xml)
 
-# Protection against redownload
+# Protection against redownload and accidential deletion from SFTP
             if os.path.isfile(file_xml_staging) and os.path.getsize(file_xml_staging) > 0 and os.path.getsize(file_xml_staging) == sftp.stat(file_xml).st_size:
                 download = False
                 purge = rds_query(RDS_TABLE, file_xml)
@@ -280,7 +279,7 @@ def main():
 
 # Download files from SFTP
             if download:
-                sftp.get(file_xml, file_xml_staging) # remote, local
+                sftp.get(file_xml, file_xml_staging)
                 logger.info("Downloaded %s to %s", file_xml, file_xml_staging)
                 rds_insert(RDS_TABLE, file_xml)
                 logger.info("File %s added to RDS", file_xml)
@@ -314,6 +313,9 @@ def main():
                     error = str(err)
                     send_message_to_slack(error)
                     sys.exit(1)
+
+        if downloadcount == 0:
+            send_message_to_slack("Something is not right: Pulling zero files! Check SFTP Admin page and contact vendor!")
 
     except Exception as err:
         logger.error("Failure getting files from SFTP")
