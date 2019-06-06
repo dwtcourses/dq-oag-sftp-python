@@ -315,6 +315,7 @@ def main():
                     sys.exit(1)
 
         if downloadcount == 0:
+            logger.warning("Pulling zero files!")
             send_message_to_slack("Something is not right: Pulling zero files! Check SFTP Admin page and contact vendor!")
 
     except Exception as err:
