@@ -1,4 +1,4 @@
-FROM quay.io/ukhomeofficedigital/centos-base:v0.5.14
+FROM docker pull centos
 
 ENV USERMAP_UID 1000
 ENV PYTHONPATH="$PYTHONPATH:/ADT"
