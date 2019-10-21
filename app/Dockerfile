@@ -1,4 +1,4 @@
-FROM docker pull centos
+FROM docker pull centos:latest
 
 ENV USERMAP_UID 1000
 ENV PYTHONPATH="$PYTHONPATH:/ADT"
