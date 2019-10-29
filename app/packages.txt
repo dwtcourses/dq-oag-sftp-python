@@ -3,4 +3,4 @@ paramiko
 requests
 schedule
 psycopg2-binary
-cryptography==2.4.2
+cryptography
