@@ -8,7 +8,7 @@ module.exports = {
     {
       name      : "DQ-OAG-file-ingest",
       script    : "/ADT/bin/DQ_OAG_file_ingest",
-      interpreter: "python",
+      interpreter: "python3",
       env: {
         PROCESS_INTERVAL: 60,
         MAYTECH_HOST : process.argv[5],
