@@ -10,7 +10,7 @@ module.exports = {
       script    : "/ADT/bin/DQ_OAG_file_ingest",
       interpreter: "python3",
       env: {
-        PROCESS_INTERVAL: 360,
+        PROCESS_INTERVAL: 60,
         MAYTECH_HOST : process.argv[5],
         MAYTECH_USER : process.argv[6],
         MAYTECH_OAG_PRIVATE_KEY_PATH : process.argv[7],

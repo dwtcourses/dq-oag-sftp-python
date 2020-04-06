@@ -4,7 +4,7 @@ environment variables"""
 import os
 
 """DQ OAG file ingest"""
-PROCESS_INTERVAL               = int(os.environ.get('PROCESS_INTERVAL', 360))
+PROCESS_INTERVAL               = int(os.environ.get('PROCESS_INTERVAL', 60))
 MAYTECH_HOST                   = os.environ.get('SSH_REMOTE_HOST_MAYTECH')
 MAYTECH_USER                   = os.environ.get('SSH_REMOTE_USER_MAYTECH')
 MAYTECH_OAG_PRIVATE_KEY_PATH   = os.environ.get('SSH_PRIVATE_KEY')
