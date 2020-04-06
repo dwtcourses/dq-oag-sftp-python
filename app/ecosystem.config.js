@@ -1,7 +1,7 @@
 module.exports = {
   /**
    * Application configuration
-   * Note: all environment variables are required.
+   * Note: all environment variables are required. 
    *
    */
   apps : [
