@@ -74,23 +74,22 @@ def ssh_login(in_host, in_user, in_keyfile):
         sys.exit(1)
     return ssh
 
-def run_virus_scan(scan_file):
+def run_virus_scan(directory):
     """
     Send a file to scanner API
     """
     logger = logging.getLogger()
-    logger.info("Virus Scanning %s", scan_file)
-    file_list = os.listdir(scan_file)
+    logger.info("Virus Scanning %s folder", directory)
+    file_list = os.listdir(directory)
     for scan_file in file_list:
         processing = os.path.join(STAGING_DIR, scan_file)
-        with open(processing, "rb") as scan:
+        with open(processing, 'rb') as scan:
             for i in range(1, NO_OF_RETRIES):
                 logger.info(f"scanning_file:{scan_file} - scan_count:{i}")
-                response = requests.post("http://" + BASE_URL + ":" + BASE_PORT + "/scan",
-                                         files={"file": scan}, data={"name": scan_file})
+                response = requests.post('http://' + BASE_URL + ':' + BASE_PORT + '/scan', files={'file': scan}, data={'name': scan_file})
                 if 'Everything ok : true' in response.text:
                     break
-            if not "Everything ok : true" in response.text:
+            if not 'Everything ok : true' in response.text:
                 logger.warning('Virus scan FAIL: %s could be dangerous! Triage quarantine directory!', scan_file)
                 warning = ("Virus scan FAIL: " + scan_file + " could be dangerous! Triage quarantine directory!")
                 send_message_to_slack(str(warning))
