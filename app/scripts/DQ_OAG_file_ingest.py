@@ -79,9 +79,8 @@ def run_virus_scan(scan_file):
     Send a file to scanner API
     """
     logger = logging.getLogger()
-    logger.info("Virus Scanning %s folder", directory)
     logger.info("Virus Scanning %s", scan_file)
-    file_list = os.listdir(directory)
+    file_list = os.listdir(STAGING_DIR)
     for scan_file in file_list:
         processing = os.path.join(STAGING_DIR, scan_file)
         with open(processing, "rb") as scan:
