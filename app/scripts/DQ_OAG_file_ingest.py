@@ -46,6 +46,7 @@ RDS_USERNAME            = os.environ["OAG_RDS_USERNAME"]
 RDS_PASSWORD            = os.environ["OAG_RDS_PASSWORD"]
 RDS_TABLE               = os.environ["OAG_RDS_TABLE"]
 SLACK_WEBHOOK           = os.environ["SLACK_WEBHOOK"]
+NO_OF_RETRIES           = int(os.getenv('NO_OF_RETRIES',4))
 
 # Setup RDS connection
 
@@ -78,19 +79,30 @@ def run_virus_scan(scan_file):
     Send a file to scanner API
     """
     logger = logging.getLogger()
+    logger.info("Virus Scanning %s folder", directory)
     logger.info("Virus Scanning %s", scan_file)
-    processing = os.path.join(STAGING_DIR, scan_file)
-    with open(processing, "rb") as scan:
-        response = requests.post("http://" + BASE_URL + ":" + BASE_PORT + "/scan",
-                                 files={"file": scan}, data={"name": scan_file})
-        if not "Everything ok : true" in response.text:
-            logger.warning("Virus scan FAIL: %s is dangerous!", scan_file)
-            warning = ("Virus scan FAIL: " + scan_file + " is dangerous!")
-            send_message_to_slack(str(warning))
-            return False
-        else:
-            logger.info("Virus scan OK: %s", scan_file)
-            return True
+    file_list = os.listdir(directory)
+    for scan_file in file_list:
+        processing = os.path.join(STAGING_DIR, scan_file)
+        with open(processing, "rb") as scan:
+            for i in range(1, NO_OF_RETRIES):
+                logger.info(f"scanning_file:{scan_file} - scan_count:{i}")
+                response = requests.post("http://" + BASE_URL + ":" + BASE_PORT + "/scan",
+                                         files={"file": scan}, data={"name": scan_file})
+                if 'Everything ok : true' in response:
+                    break
+            if not "Everything ok : true" in response.text:
+                logger.warning('Virus scan FAIL: %s could be dangerous! Triage quarantine directory!', scan_file)
+                warning = ("Virus scan FAIL: " + scan_file + " could be dangerous! Triage quarantine directory!")
+                send_message_to_slack(str(warning))
+                file_quarantine = os.path.join(QUARANTINE_DIR, scan_file)
+                logger.warning('Move %s from staging to quarantine %s', processing, file_quarantine)
+                os.rename(processing, file_quarantine)
+                continue
+                return False
+            else:
+                logger.info("Virus scan OK: %s", scan_file)
+    return True
 
 def rds_insert(table, filename):
     """
