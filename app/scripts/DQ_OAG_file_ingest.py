@@ -47,6 +47,7 @@ RDS_PASSWORD            = os.environ["OAG_RDS_PASSWORD"]
 RDS_TABLE               = os.environ["OAG_RDS_TABLE"]
 SLACK_WEBHOOK           = os.environ["SLACK_WEBHOOK"]
 NO_OF_RETRIES           = int(os.getenv('NO_OF_RETRIES',4))
+DIRECTROY               = "ADT/stage/oag/"
 
 # Setup RDS connection
 
@@ -80,7 +81,7 @@ def run_virus_scan(scan_file):
     """
     logger = logging.getLogger()
     logger.info("Virus Scanning %s", scan_file)
-    file_list = os.listdir(STAGING_DIR)
+    file_list = os.listdir(DIRECTROY)
     for scan_file in file_list:
         processing = os.path.join(STAGING_DIR, scan_file)
         with open(processing, "rb") as scan:
