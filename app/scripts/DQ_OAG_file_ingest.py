@@ -79,7 +79,7 @@ def run_virus_scan(scan_file):
     """
     logger = logging.getLogger()
     logger.info("Virus Scanning %s", scan_file)
-    file_list = os.listdir(scan_file)
+    file_list = os.listdir(STAGING_DIR)
     for scan_file in file_list:
         processing = os.path.join(STAGING_DIR, scan_file)
         with open(processing, "rb") as scan:
