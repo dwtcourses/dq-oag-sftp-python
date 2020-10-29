@@ -287,8 +287,11 @@ def main():
                 if run_virus_scan(file_xml_staging):
                     logger.debug("%s has been scanned successfully", file_xml)
                 else:
-                    os.remove(file_xml_staging)
-                    logger.info("Deleted virus file %s from staging", file_xml)
+                    quarantine = os.path.join(QUARANTINE_DIR, obj)
+                    os.rename(file_xml_staging, quarantine)
+                    # os.remove(file_xml_staging)
+                    logger.info("Moved %s from staging to quarantine %s", file_staging, quarantine)
+                    # logger.info("Deleted virus file %s from staging", file_xml)
                     break
 
 # Parse downloaded file
