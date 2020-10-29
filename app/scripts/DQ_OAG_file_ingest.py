@@ -81,9 +81,8 @@ def run_virus_scan(scan_file):
     logger.info("Virus Scanning %s", scan_file)
     processing = os.path.join(STAGING_DIR, scan_file)
     with open(processing, "rb") as scan:
-        response = requests.post("http://" + BASE_URL + ":" + BASE_PORT + "/scan",
-                                 files={"file": scan}, data={"name": scan_file})
-        if not "Everything ok : true" in response.text:
+        response = "Everything ok : false"
+        if not "Everything ok : true" in response:
             logger.warning("Virus scan FAIL: %s is dangerous!", scan_file)
             warning = ("Virus scan FAIL: " + scan_file + " is dangerous!")
             send_message_to_slack(str(warning))
