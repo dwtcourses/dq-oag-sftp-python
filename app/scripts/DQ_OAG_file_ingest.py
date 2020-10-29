@@ -126,22 +126,22 @@ def rds_query(table, filename):
     else:
         return 0
 
-def parse_xml(xml_file):
-    """
-    Parse XML files
-    """
-    logger = logging.getLogger()
-    try:
-        xml.dom.minidom.parse("{0}".format(xml_file))
-        logger.info("%s has been parsed successfully", xml_file)
-        return 0
-
-    except Exception as err:
-        logger.error("XML PARSE ERROR")
-        logger.exception(str(err))
-        error = str(err)
-        err_message = "Could not parse" + " " + xml_file + " " + error
-        send_message_to_slack(err_message)
+# def parse_xml(xml_file):
+#     """
+#     Parse XML files
+#     """
+#     logger = logging.getLogger()
+#     try:
+#         xml.dom.minidom.parse("{0}".format(xml_file))
+#         logger.info("%s has been parsed successfully", xml_file)
+#         return 0
+#
+#     except Exception as err:
+#         logger.error("XML PARSE ERROR")
+#         logger.exception(str(err))
+#         error = str(err)
+#         err_message = "Could not parse" + " " + xml_file + " " + error
+#         send_message_to_slack(err_message)
 
 def find_parsed_failed_xml(path, name):
     """
@@ -294,25 +294,25 @@ def main():
 
 # Parse downloaded file
 # Remove files from SFTP
-                try:
-                    if parse_xml(file_xml_staging) is not 0:
-                        os.rename(file_xml_staging, file_failed_parse_dir)
-                        logger.error("Moved failed parsed file %s", file_xml)
-                    else:
-                        if os.path.isfile(file_xml_staging) and os.path.getsize(file_xml_staging) > 0 and os.path.getsize(file_xml_staging) == sftp.stat(file_xml).st_size:
-                            purge = rds_query(RDS_TABLE, file_xml)
-                            if purge == 1:
-                                sftp.remove(file_xml)
-                                logger.info("Deleted %s from SFTP", file_xml)
-                                os.rename(file_xml_staging, file_download)
-                                logger.info("Moved %s to the download folder", file_xml)
-
-                except Exception as err:
-                    logger.error("Failure listing %s", DOWNLOAD_DIR)
-                    logger.exception(str(err))
-                    error = str(err)
-                    send_message_to_slack(error)
-                    sys.exit(1)
+                # try:
+                #     if parse_xml(file_xml_staging) is not 0:
+                #         os.rename(file_xml_staging, file_failed_parse_dir)
+                #         logger.error("Moved failed parsed file %s", file_xml)
+                #     else:
+                #         if os.path.isfile(file_xml_staging) and os.path.getsize(file_xml_staging) > 0 and os.path.getsize(file_xml_staging) == sftp.stat(file_xml).st_size:
+                #             purge = rds_query(RDS_TABLE, file_xml)
+                #             if purge == 1:
+                #                 sftp.remove(file_xml)
+                #                 logger.info("Deleted %s from SFTP", file_xml)
+                #                 os.rename(file_xml_staging, file_download)
+                #                 logger.info("Moved %s to the download folder", file_xml)
+                #
+                # except Exception as err:
+                #     logger.error("Failure listing %s", DOWNLOAD_DIR)
+                #     logger.exception(str(err))
+                #     error = str(err)
+                #     send_message_to_slack(error)
+                #     sys.exit(1)
 
         if downloadcount == 0:
             logger.warning("Pulling zero files!")
