@@ -287,7 +287,7 @@ def main():
                 if run_virus_scan(file_xml_staging):
                     logger.debug("%s has been scanned successfully", file_xml)
                 else:
-                    quarantine = os.path.join(QUARANTINE_DIR, obj)
+                    quarantine = os.path.join(QUARANTINE_DIR, file_xml)
                     os.rename(file_xml_staging, quarantine)
                     # os.remove(file_xml_staging)
                     logger.info("Moved %s from staging to quarantine %s", file_staging, quarantine)
