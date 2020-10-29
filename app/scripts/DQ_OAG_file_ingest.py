@@ -290,7 +290,7 @@ def main():
                     quarantine = os.path.join(QUARANTINE_DIR, file_xml)
                     os.rename(file_xml_staging, quarantine)
                     # os.remove(file_xml_staging)
-                    logger.info("Moved %s from staging to quarantine %s", file_staging, quarantine)
+                    logger.info("Moved %s from staging to quarantine %s", file_xml_staging, quarantine)
                     # logger.info("Deleted virus file %s from staging", file_xml)
                     break
 
