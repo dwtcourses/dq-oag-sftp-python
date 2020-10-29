@@ -88,7 +88,6 @@ def run_virus_scan(scan_file):
                 logger.info(f"scanning_file:{scan_file} - scan_count:{i}")
                 response = requests.post('http://' + BASE_URL + ':' + BASE_PORT + '/scan', files={'file': scan}, data={'name': scan_file})
                 if 'Everything ok : true' in response.text:
-                    logger.info('response from clamav = 'response)
                     break
             if not "Everything ok : true" in response.text:
                 logger.warning('Virus scan FAIL: %s could be dangerous! Triage quarantine directory!', scan_file)
