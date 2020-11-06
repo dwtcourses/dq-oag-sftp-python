@@ -299,8 +299,8 @@ def main():
                 else:
                     break
 
-Parse downloaded file
-Remove files from SFTP
+# Parse downloaded file
+# Remove files from SFTP
                 try:
                     if parse_xml(file_xml_staging) is not 0:
                         os.rename(file_xml_staging, file_failed_parse_dir)
