@@ -45,6 +45,7 @@ pipeline:
       - export OAG_RDS_PASSWORD=$$NOTPROD_OAG_RDS_PASSWORD
       - export OAG_RDS_TABLE=$$NOTPROD_OAG_RDS_TABLE
       - export SLACK_WEBHOOK=$$NOTPROD_SLACK_WEBHOOK
+      - kd --delete -f kube/deployment.yml
       - kd -f kube/pvc.yml -f kube/secret.yml -f kube/deployment.yml
     secrets:
       - NOTPROD_KUBE_TOKEN
@@ -97,6 +98,7 @@ pipeline:
       - export OAG_RDS_PASSWORD=$$PROD_OAG_RDS_PASSWORD
       - export OAG_RDS_TABLE=$$PROD_OAG_RDS_TABLE
       - export SLACK_WEBHOOK=$$PROD_SLACK_WEBHOOK
+      - kd --delete -f kube/deployment.yml
       - kd -f kube/pvc.yml -f kube/secret.yml -f kube/deployment.yml
     secrets:
       - PROD_KUBE_TOKEN
