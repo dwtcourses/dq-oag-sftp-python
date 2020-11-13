@@ -66,8 +66,6 @@ pipeline:
       - NOTPROD_SLACK_WEBHOOK
     when:
       event: push
-      branch:
-        exclude: [ master ]
 
   deploy_to_production:
     image: quay.io/ukhomeofficedigital/kd
