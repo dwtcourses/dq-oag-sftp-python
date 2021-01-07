@@ -2,6 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: dq-oag-data-ingest
+  annotations:
+    environment: {{ .ENV }}
+    {{ if eq .ENV "notprod" }}downscaler/uptime: Mon-Fri 07:00-18:30 Europe/London{{ end }}
 spec:
   replicas: 1
   selector:
